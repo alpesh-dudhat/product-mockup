@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #f0eee9; font-family: 'Caveat', cursive; }
+  * { box-sizing: border-box; }
+  .dv-turn { padding: 40px 44px 32px; border-bottom: 1px solid rgba(0,0,0,.08); scroll-margin-top: 16px; }
+  .dv-thd { display: flex; align-items: baseline; gap: 10px; margin: 0 0 20px; }
+  .dv-tid { font: 600 10px ui-monospace,Menlo,monospace; padding: 3px 7px; background: #1a1a1a; color: #fff; border-radius: 4px; text-decoration: none; }
+  .dv-tname { font: 600 13px/1.2 system-ui,sans-serif; color: #1a1a1a; }
+  .dv-opts { display: flex; flex-wrap: wrap; gap: 36px; align-items: flex-start; }
+  .dv-opt { flex: none; display: flex; flex-direction: column; gap: 9px; scroll-margin-top: 16px; }
+  .dv-oid { font: 600 10.5px ui-monospace,Menlo,monospace; padding: 3px 7px; background: rgba(0,0,0,.08); color: #1a1a1a; border-radius: 5px; text-decoration: none; }
+  .dv-olabel { display: flex; align-items: baseline; gap: 8px; font: 400 12px/1.3 system-ui,sans-serif; color: rgba(0,0,0,.55); }
+  .dv-card { max-width: 100%; background: #fff; border: 2px solid #1a1a1a; border-radius: 4px; overflow: hidden; position: relative; }
+  .dv-opt:target .dv-oid { background: #2a78d6; color: #fff; }
+  .dv-next { margin: 22px 0 0; font: 12px/1.5 system-ui,sans-serif; color: rgba(0,0,0,.5); }
+
+  /* Wireframe style elements */
+  .wf { font-family: 'Caveat', cursive; }
+  .wf-box { border: 2px dashed #999; border-radius: 2px; background: #f8f8f8; display: flex; align-items: center; justify-content: center; color: #888; font-size: 13px; text-align: center; }
+  .wf-box.solid { border-style: solid; border-color: #555; background: #ececec; color: #444; }
+  .wf-box.dark { background: #2a2a2a; color: #fff; border-color: #2a2a2a; border-style: solid; }
+  .wf-box.accent { background: #d4e8ff; border-color: #4a90d9; border-style: solid; color: #2a5a99; }
+  .wf-box.green { background: #d4f0e0; border-color: #3a9a60; border-style: solid; color: #1a6a40; }
+  .wf-label { font-family: 'Caveat', cursive; font-size: 14px; color: #444; }
+  .wf-heading { font-family: 'Caveat', cursive; font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .wf-sub { font-family: 'Caveat', cursive; font-size: 12px; color: #888; }
+  .wf-divider { border: none; border-top: 2px dashed #ccc; margin: 8px 0; }
+  .wf-note { font-family: 'Caveat', cursive; font-size: 12px; color: #c06000; background: #fff8e8; padding: 3px 7px; border-left: 3px solid #f0a020; border-radius: 2px; }
+  .wf-tag { display: inline-block; font-family: 'Caveat', cursive; font-size: 12px; background: #e8e8e8; border: 1px solid #ccc; border-radius: 3px; padding: 1px 6px; }
+  .wf-arrow { font-size: 18px; color: #888; }
+  .wf-img-placeholder { position: relative; }
+  .wf-img-placeholder::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(0,0,0,.04) 8px, rgba(0,0,0,.04) 9px); }
+  .wf-logo-chip { border: 2px solid #4a90d9; border-radius: 3px; padding: 2px 8px; font-family: 'Caveat', cursive; font-size: 12px; color: #2a5a99; background: rgba(74,144,217,.1); display: inline-flex; align-items: center; gap: 4px; }
+  .wf-btn { display: inline-flex; align-items: center; justify-content: center; border: 2px solid #1a1a1a; border-radius: 3px; padding: 4px 12px; font-family: 'Caveat', cursive; font-size: 13px; background: #fff; cursor: default; gap: 5px; }
+  .wf-btn.primary { background: #1a1a1a; color: #fff; }
+  .wf-btn.sm { padding: 2px 8px; font-size: 12px; }
+  .wf-input { border: 2px solid #bbb; border-radius: 2px; padding: 4px 8px; font-family: 'Caveat', cursive; font-size: 13px; color: #444; background: #fafafa; width: 100%; }
+  .wf-checkbox { display: flex; align-items: center; gap: 6px; font-family: 'Caveat', cursive; font-size: 13px; color: #444; }
+  .wf-checkbox-box { width: 14px; height: 14px; border: 2px solid #999; border-radius: 2px; background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .wf-checked { background: #2a2a2a !important; }
+  .wf-check-mark { color: #fff; font-size: 10px; }
+  .wf-section-title { font-family: 'Caveat', cursive; font-size: 15px; font-weight: 700; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 4px; margin-bottom: 8px; }
+  .wf-thumb { width: 100%; aspect-ratio: 1; border: 2px solid #ccc; border-radius: 3px; background: #f0f0f0; position: relative; overflow: hidden; }
+  .wf-thumb.active { border-color: #2a78d6; border-width: 3px; }
+  .wf-thumb::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0,0,0,.05) 6px, rgba(0,0,0,.05) 7px); }
+  .step-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #1a1a1a; display: flex; align-items: center; justify-content: center; font-family: 'Caveat', cursive; font-size: 14px; font-weight: 700; }
+  .step-dot.done { background: #1a1a1a; color: #fff; }
+  .step-dot.active { background: #4a90d9; border-color: #4a90d9; color: #fff; }
+</style>
+</helmet>
+
+<!-- TURN 5 -->
+<section class="dv-turn wf" id="t5">
+  <div class="dv-thd"><a class="dv-tid" href="#t5">5</a><span class="dv-tname">Fully customisable export — updated modal + layout combinations</span></div>
+  <div class="dv-opts">
+
+    <!-- 5a: Updated export modal with full layout controls -->
+    <div class="dv-opt" id="5a">
+      <div class="dv-olabel"><a class="dv-oid" href="#5a">5a</a>Export modal — full layout controls</div>
+      <div class="dv-card" style="width:460px;">
+        <div style="background:#2a2a2a;padding:5px 12px;"><div style="font-family:'Caveat',cursive;font-size:10px;color:#555;">← app behind (dimmed)</div></div>
+        <div style="background:#fff;padding:22px;display:flex;flex-direction:column;gap:14px;font-family:'Caveat',cursive;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div><div class="wf-heading">Export PDF Mockup</div><div class="wf-sub" style="margin-top:2px;">3 items · HD quality</div></div>
+            <div style="font-size:20px;color:#ccc;cursor:pointer;">✕</div>
+          </div>
+
+          <hr class="wf-divider">
+
+          <!-- Client info -->
+          <div>
+            <div class="wf-section-title">Client Info</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;gap:8px;">
+                <div style="flex:1;"><div class="wf-sub">Client Name</div><div class="wf-input">Acme Corp Ltd</div></div>
+                <div style="flex:1;"><div class="wf-sub">Quote / Order #</div><div class="wf-input">QT-2024-089</div></div>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <div style="flex:1;"><div class="wf-sub">Date</div><div class="wf-input">08/07/2025</div></div>
+                <div style="flex:1;"><div class="wf-sub">Client Logo</div><div class="wf-box" style="height:30px;font-size:11px;border-style:dashed;">📎 client_logo.png</div></div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="wf-divider">
+
+          <!-- PAGE LAYOUT section -->
+          <div>
+            <div class="wf-section-title">📐 Page Layout</div>
+
+            <!-- Card orientation -->
+            <div style="margin-bottom:10px;">
+              <div class="wf-sub" style="margin-bottom:6px;">Card orientation</div>
+              <div style="display:flex;gap:10px;">
+                <!-- Horizontal selected -->
+                <div style="flex:1;border:2px solid #4a90d9;border-radius:4px;padding:10px 8px;background:rgba(74,144,217,.07);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                  <!-- horizontal thumbnail -->
+                  <div style="width:72px;height:46px;border:1.5px solid #4a90d9;border-radius:2px;background:#fff;display:flex;gap:2px;padding:4px;">
+                    <div style="flex:0 0 28px;background:#c8dff6;border-radius:1px;"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:2px;justify-content:center;">
+                      <div style="height:4px;background:#4a90d9;border-radius:1px;opacity:.5;"></div>
+                      <div style="height:3px;background:#c8dff6;border-radius:1px;"></div>
+                      <div style="height:3px;background:#c8dff6;border-radius:1px;"></div>
+                      <div style="height:3px;background:#c8dff6;border-radius:1px;"></div>
+                    </div>
+                  </div>
+                  <div style="font-size:12px;font-weight:700;color:#2a5a99;">Horizontal</div>
+                  <div style="font-size:10px;color:#4a90d9;">image ← · details →</div>
+                </div>
+                <!-- Vertical -->
+                <div style="flex:1;border:2px solid #ddd;border-radius:4px;padding:10px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                  <div style="width:46px;height:58px;border:1.5px solid #ccc;border-radius:2px;background:#fff;display:flex;flex-direction:column;gap:2px;padding:4px;">
+                    <div style="flex:0 0 22px;background:#eee;border-radius:1px;"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:2px;justify-content:center;">
+                      <div style="height:3px;background:#ddd;border-radius:1px;"></div>
+                      <div style="height:3px;background:#ddd;border-radius:1px;"></div>
+                      <div style="height:3px;background:#ddd;border-radius:1px;"></div>
+                    </div>
+                  </div>
+                  <div style="font-size:12px;color:#888;">Vertical</div>
+                  <div style="font-size:10px;color:#aaa;">image ↑ · details ↓</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Products per page -->
+            <div>
+              <div class="wf-sub" style="margin-bottom:6px;">Products per page</div>
+              <div style="display:flex;gap:7px;">
+                <!-- 1-up selected -->
+                <div style="flex:1;border:2px solid #4a90d9;border-radius:4px;padding:7px 4px;background:rgba(74,144,217,.08);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                  <div style="width:40px;height:50px;border:1.5px solid #4a90d9;border-radius:2px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:1.5px;">
+                    <div style="height:7px;background:#c8dff6;border-radius:1px;"></div>
+                    <div style="flex:1;display:flex;gap:1.5px;">
+                      <div style="flex:0 0 40%;background:#4a90d9;border-radius:1px;opacity:.45;"></div>
+                      <div style="flex:1;display:flex;flex-direction:column;gap:1px;justify-content:center;padding:1px;">
+                        <div style="height:2.5px;background:#c8dff6;border-radius:1px;"></div>
+                        <div style="height:2.5px;background:#c8dff6;border-radius:1px;"></div>
+                        <div style="height:2.5px;background:#c8dff6;border-radius:1px;"></div>
+                      </div>
+                    </div>
+                    <div style="height:4px;background:#ddeeff;border-radius:1px;"></div>
+                  </div>
+                  <div style="font-size:12px;font-weight:700;color:#2a5a99;">1</div>
+                </div>
+                <!-- 2-up -->
+                <div style="flex:1;border:2px solid #ddd;border-radius:4px;padding:7px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                  <div style="width:40px;height:50px;border:1.5px solid #ccc;border-radius:2px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:1.5px;">
+                    <div style="height:5px;background:#eee;border-radius:1px;"></div>
+                    <div style="flex:1;display:flex;gap:1.5px;">
+                      <div style="flex:1;background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#bbb;border-radius:1px;"></div></div>
+                      <div style="flex:1;background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#bbb;border-radius:1px;"></div></div>
+                    </div>
+                    <div style="height:3px;background:#eee;border-radius:1px;"></div>
+                  </div>
+                  <div style="font-size:12px;color:#888;">2</div>
+                </div>
+                <!-- 3-up -->
+                <div style="flex:1;border:2px solid #ddd;border-radius:4px;padding:7px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                  <div style="width:40px;height:50px;border:1.5px solid #ccc;border-radius:2px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:1.5px;">
+                    <div style="height:5px;background:#eee;border-radius:1px;"></div>
+                    <div style="flex:1;display:flex;gap:1px;">
+                      <div style="flex:1;background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#bbb;border-radius:1px;"></div></div>
+                      <div style="flex:1;background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#bbb;border-radius:1px;"></div></div>
+                      <div style="flex:1;background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#bbb;border-radius:1px;"></div></div>
+                    </div>
+                    <div style="height:3px;background:#eee;border-radius:1px;"></div>
+                  </div>
+                  <div style="font-size:12px;color:#888;">3</div>
+                </div>
+                <!-- 4-up -->
+                <div style="flex:1;border:2px solid #ddd;border-radius:4px;padding:7px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                  <div style="width:40px;height:50px;border:1.5px solid #ccc;border-radius:2px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:1.5px;">
+                    <div style="height:5px;background:#eee;border-radius:1px;"></div>
+                    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;">
+                      <div style="background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#bbb;border-radius:1px;"></div></div>
+                      <div style="background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#bbb;border-radius:1px;"></div></div>
+                      <div style="background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#bbb;border-radius:1px;"></div></div>
+                      <div style="background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#bbb;border-radius:1px;"></div></div>
+                    </div>
+                    <div style="height:3px;background:#eee;border-radius:1px;"></div>
+                  </div>
+                  <div style="font-size:12px;color:#888;">4</div>
+                </div>
+              </div>
+              <div class="wf-note" style="margin-top:6px;">Live preview updates below as you pick ↓</div>
+            </div>
+
+            <!-- Live mini-preview -->
+            <div style="margin-top:10px;border:2px dashed #ddd;border-radius:4px;padding:10px;background:#fafafa;">
+              <div style="font-size:10px;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Preview (1-up · Horizontal)</div>
+              <div style="background:#fff;border:1px solid #eee;border-radius:2px;padding:8px;display:flex;gap:8px;height:60px;">
+                <div style="flex:0 0 35%;background:#e0e0e0;border-radius:2px;display:flex;align-items:center;justify-content:center;">
+                  <div style="width:60%;height:70%;background:#bbb;border-radius:1px;position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;top:3px;left:50%;transform:translateX(-50%);border:1px solid #4a90d9;padding:0px 4px;font-size:6px;color:#4a90d9;background:rgba(255,255,255,.8);">LOGO</div>
+                  </div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px;justify-content:center;">
+                  <div style="height:5px;background:#ddd;border-radius:1px;width:80%;"></div>
+                  <div style="height:3px;background:#eee;border-radius:1px;width:60%;"></div>
+                  <div style="height:3px;background:#eee;border-radius:1px;width:70%;"></div>
+                  <div style="height:3px;background:#eee;border-radius:1px;width:50%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="wf-divider">
+
+          <!-- Extra notes & options -->
+          <div>
+            <div class="wf-section-title">Extra Notes &amp; Options</div>
+            <div class="wf-input" style="min-height:44px;margin-bottom:8px;">Proof approved. Production begins 10 July…</div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div class="wf-checkbox"><div class="wf-checkbox-box wf-checked"><span class="wf-check-mark">✓</span></div>Include page numbers</div>
+              <div class="wf-checkbox"><div class="wf-checkbox-box wf-checked"><span class="wf-check-mark">✓</span></div>PromoWear.ie logo in header</div>
+              <div class="wf-checkbox"><div class="wf-checkbox-box"><span></span></div>Terms &amp; conditions on last page</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <div class="wf-btn">Cancel</div>
+            <div class="wf-btn primary">⬇ Generate HD PDF</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Orientation picker + per-page count + live mini-preview = fully informed export choice.</div>
+    </div>
+
+    <!-- 5b: 2-up Horizontal result -->
+    <div class="dv-opt" id="5b">
+      <div class="dv-olabel"><a class="dv-oid" href="#5b">5b</a>2-up · Horizontal cards</div>
+      <div class="dv-card" style="width:500px;background:#e0e0e0;padding:14px;">
+        <div style="background:#fff;border:1px solid #bbb;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:18px 20px;display:flex;flex-direction:column;gap:10px;font-family:'Caveat',cursive;min-height:580px;position:relative;">
+          <div style="position:absolute;bottom:10px;right:16px;font-size:9px;color:#ccc;">Page 1 of 2</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2.5px solid #1a1a1a;padding-bottom:10px;">
+            <div style="font-size:19px;font-weight:700;">PromoWear.ie</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-size:9px;color:#aaa;line-height:1.6;text-align:right;"><div>QT-2024-089</div><div>08 July 2025</div></div>
+              <div class="wf-box" style="width:58px;height:26px;font-size:8px;border-color:#ddd;">Client Logo</div>
+            </div>
+          </div>
+          <!-- 2 horizontal cards stacked -->
+          <div style="display:flex;flex-direction:column;gap:12px;flex:1;">
+            <!-- card 1 -->
+            <div style="flex:1;border:1.5px solid #eee;border-radius:3px;display:flex;gap:0;overflow:hidden;">
+              <div style="flex:0 0 38%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;position:relative;">
+                <div style="width:80px;height:100px;background:#bbb;border-radius:4px;position:relative;display:flex;align-items:center;justify-content:center;">
+                  <div style="font-size:9px;color:#888;">T-Shirt #1</div>
+                  <div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);border:1.5px solid #4a90d9;padding:2px 8px;background:rgba(255,255,255,.85);border-radius:2px;text-align:center;">
+                    <div style="font-size:7px;color:#2a5a99;font-weight:700;">LOGO</div>
+                  </div>
+                </div>
+              </div>
+              <div style="flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:5px;justify-content:center;">
+                <div style="font-size:13px;font-weight:700;">Gildan 5000</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;">
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">Qty</div><div style="font-size:10px;">50 pcs</div></div>
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">Colour</div><div style="font-size:10px;">Black</div></div>
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">Decoration</div><div style="font-size:10px;">Embroidery</div></div>
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">Placement</div><div style="font-size:10px;">Left Chest</div></div>
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">W × H</div><div style="font-size:10px;">10" × 8"</div></div>
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">Price</div><div style="font-size:10px;font-weight:700;">€12.50</div></div>
+                </div>
+              </div>
+            </div>
+            <!-- card 2 -->
+            <div style="flex:1;border:1.5px solid #eee;border-radius:3px;display:flex;gap:0;overflow:hidden;">
+              <div style="flex:0 0 38%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;">
+                <div style="width:80px;height:100px;background:#aaa;border-radius:4px;position:relative;display:flex;align-items:center;justify-content:center;">
+                  <div style="font-size:9px;color:#888;">Hoodie #2</div>
+                  <div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);border:1.5px solid #4a90d9;padding:2px 8px;background:rgba(255,255,255,.85);border-radius:2px;text-align:center;">
+                    <div style="font-size:7px;color:#2a5a99;font-weight:700;">LOGO</div>
+                  </div>
+                </div>
+              </div>
+              <div style="flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:5px;justify-content:center;">
+                <div style="font-size:13px;font-weight:700;">Gildan 18500</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;">
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">Qty</div><div style="font-size:10px;">30 pcs</div></div>
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">Colour</div><div style="font-size:10px;">Navy</div></div>
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">Decoration</div><div style="font-size:10px;">Print</div></div>
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">Placement</div><div style="font-size:10px;">Back</div></div>
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">W × H</div><div style="font-size:10px;">12" × 10"</div></div>
+                  <div><div style="font-size:7px;color:#bbb;text-transform:uppercase;">Price</div><div style="font-size:10px;font-weight:700;">€18.00</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="border-top:1.5px solid #eee;padding-top:8px;display:flex;justify-content:space-between;">
+            <div style="font-size:9px;color:#aaa;">Proof approved. Production begins 10 July.</div>
+            <div style="font-size:9px;color:#ccc;">PromoWear.ie</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">2 horizontal cards per page — image always prominent, details scannable.</div>
+    </div>
+
+    <!-- 5c: 2-up Vertical result -->
+    <div class="dv-opt" id="5c">
+      <div class="dv-olabel"><a class="dv-oid" href="#5c">5c</a>2-up · Vertical cards</div>
+      <div class="dv-card" style="width:420px;background:#e0e0e0;padding:14px;">
+        <div style="background:#fff;border:1px solid #bbb;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:18px 20px;display:flex;flex-direction:column;gap:10px;font-family:'Caveat',cursive;min-height:580px;position:relative;">
+          <div style="position:absolute;bottom:10px;right:16px;font-size:9px;color:#ccc;">Page 1 of 2</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2.5px solid #1a1a1a;padding-bottom:10px;">
+            <div style="font-size:19px;font-weight:700;">PromoWear.ie</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font-size:9px;color:#aaa;line-height:1.6;text-align:right;"><div>QT-2024-089</div><div>08 July 2025</div></div>
+              <div class="wf-box" style="width:56px;height:24px;font-size:8px;border-color:#ddd;">Client Logo</div>
+            </div>
+          </div>
+          <!-- 2 vertical cards side by side -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;">
+            <!-- card 1 -->
+            <div style="border:1.5px solid #eee;border-radius:3px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#e8e8e8;height:160px;display:flex;align-items:center;justify-content:center;">
+                <div style="width:70px;height:88px;background:#bbb;border-radius:3px;position:relative;display:flex;align-items:center;justify-content:center;">
+                  <div style="font-size:8px;color:#888;">T-Shirt</div>
+                  <div style="position:absolute;top:14px;left:50%;transform:translateX(-50%);border:1.5px solid #4a90d9;padding:2px 7px;background:rgba(255,255,255,.85);border-radius:2px;">
+                    <div style="font-size:6px;color:#2a5a99;font-weight:700;">LOGO</div>
+                  </div>
+                </div>
+              </div>
+              <div style="padding:8px 10px;display:flex;flex-direction:column;gap:4px;flex:1;">
+                <div style="font-size:12px;font-weight:700;">Gildan 5000</div>
+                <div style="font-size:9px;color:#666;display:flex;flex-direction:column;gap:2px;">
+                  <div>50 pcs · Black · L</div>
+                  <div>Embroidery · Left Chest</div>
+                  <div>10" × 8" · PMS 286C</div>
+                  <div style="font-weight:700;font-size:10px;color:#1a1a1a;margin-top:2px;">€12.50</div>
+                </div>
+              </div>
+            </div>
+            <!-- card 2 -->
+            <div style="border:1.5px solid #eee;border-radius:3px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#e0e0e0;height:160px;display:flex;align-items:center;justify-content:center;">
+                <div style="width:70px;height:88px;background:#aaa;border-radius:3px;position:relative;display:flex;align-items:center;justify-content:center;">
+                  <div style="font-size:8px;color:#888;">Hoodie</div>
+                  <div style="position:absolute;top:14px;left:50%;transform:translateX(-50%);border:1.5px solid #4a90d9;padding:2px 7px;background:rgba(255,255,255,.85);border-radius:2px;">
+                    <div style="font-size:6px;color:#2a5a99;font-weight:700;">LOGO</div>
+                  </div>
+                </div>
+              </div>
+              <div style="padding:8px 10px;display:flex;flex-direction:column;gap:4px;flex:1;">
+                <div style="font-size:12px;font-weight:700;">Gildan 18500</div>
+                <div style="font-size:9px;color:#666;display:flex;flex-direction:column;gap:2px;">
+                  <div>30 pcs · Navy · XL</div>
+                  <div>Print · Back</div>
+                  <div>12" × 10" · CMYK</div>
+                  <div style="font-weight:700;font-size:10px;color:#1a1a1a;margin-top:2px;">€18.00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="border-top:1.5px solid #eee;padding-top:8px;display:flex;justify-content:space-between;">
+            <div style="font-size:9px;color:#aaa;">Proof approved. Production begins 10 July.</div>
+            <div style="font-size:9px;color:#ccc;">PromoWear.ie</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">2 vertical cards side-by-side — great for comparing colour variants of the same product.</div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: <b>"build it"</b> — I'll code the full app · "show 4-up horizontal" · "add a cover/summary page to the PDF"</p>
+</section>
+
+<!-- TURN 4 -->
+<section class="dv-turn wf" id="t4">
+  <div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">PDF 1-up — horizontal vs vertical layout, big mockup</span></div>
+  <div class="dv-opts">
+
+    <!-- 4a: Horizontal — image left, details right -->
+    <div class="dv-opt" id="4a">
+      <div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>Horizontal — image left · details right</div>
+      <div class="dv-card" style="width:520px;background:#e0e0e0;padding:16px;">
+        <div style="background:#fff;border:1px solid #bbb;box-shadow:0 6px 20px rgba(0,0,0,.15);font-family:'Caveat',cursive;display:flex;flex-direction:column;min-height:680px;">
+
+          <!-- Header -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 22px 12px;border-bottom:3px solid #1a1a1a;">
+            <div>
+              <div style="font-size:22px;font-weight:700;line-height:1;">PromoWear.ie</div>
+              <div style="font-size:10px;color:#aaa;margin-top:2px;">info@promowear.ie · www.promowear.ie</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="text-align:right;">
+                <div style="font-size:10px;color:#aaa;">Quote #QT-2024-089</div>
+                <div style="font-size:10px;color:#aaa;">08 July 2025</div>
+              </div>
+              <div class="wf-box" style="width:72px;height:36px;font-size:9px;border-color:#ddd;flex-shrink:0;">Client Logo</div>
+            </div>
+          </div>
+
+          <!-- Main body: left=image, right=details -->
+          <div style="display:flex;flex:1;padding:18px 22px;gap:20px;">
+
+            <!-- LEFT: big mockup -->
+            <div style="flex:0 0 240px;display:flex;flex-direction:column;gap:10px;">
+              <!-- big image box -->
+              <div style="flex:1;background:#ebebeb;border:2px solid #ccc;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-height:340px;">
+                <!-- simulated shirt silhouette -->
+                <div style="width:160px;height:200px;background:#bbb;border-radius:6px;position:relative;display:flex;align-items:center;justify-content:center;">
+                  <div style="font-size:13px;color:#888;">T-Shirt</div>
+                  <!-- logo overlay -->
+                  <div style="position:absolute;top:40px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.85);border:2px solid #4a90d9;border-radius:3px;padding:6px 16px;text-align:center;">
+                    <div style="font-size:11px;color:#2a5a99;font-weight:700;">CLIENT</div>
+                    <div style="font-size:9px;color:#4a90d9;">LOGO</div>
+                  </div>
+                </div>
+                <!-- image label -->
+                <div style="position:absolute;bottom:8px;font-size:9px;color:#aaa;">HD Mockup · 300dpi</div>
+              </div>
+              <!-- logo chips below image -->
+              <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                <div style="border:1.5px solid #4a90d9;border-radius:2px;padding:2px 7px;font-size:10px;color:#2a5a99;background:rgba(74,144,217,.08);">Logo_v2.png</div>
+                <div style="border:1.5px solid #ccc;border-radius:2px;padding:2px 7px;font-size:10px;color:#777;">Back_logo.svg</div>
+              </div>
+            </div>
+
+            <!-- RIGHT: all details -->
+            <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
+              <div style="font-size:18px;font-weight:700;color:#1a1a1a;border-bottom:2px solid #eee;padding-bottom:8px;">Gildan 5000 Heavy Cotton</div>
+
+              <!-- product details grid -->
+              <div>
+                <div style="font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Product Details</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;">
+                  <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">SKU</div><div style="font-size:12px;">GLD-5000</div></div>
+                  <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Price</div><div style="font-size:12px;font-weight:700;">€12.50</div></div>
+                  <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Quantity</div><div style="font-size:12px;">50 pcs</div></div>
+                  <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Size</div><div style="font-size:12px;">L</div></div>
+                  <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Colour</div><div style="font-size:12px;display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#222;border-radius:50%;display:inline-block;flex-shrink:0;"></span>Black</div></div>
+                  <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Material</div><div style="font-size:12px;">100% Cotton</div></div>
+                </div>
+              </div>
+
+              <div style="border-top:1.5px solid #f0f0f0;padding-top:10px;">
+                <div style="font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Artwork &amp; Decoration</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;">
+                  <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Type</div><div style="font-size:12px;">Embroidery</div></div>
+                  <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Placement</div><div style="font-size:12px;">Left Chest</div></div>
+                  <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Width × Height</div><div style="font-size:12px;">10" × 8"</div></div>
+                  <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Thread Colour</div><div style="font-size:12px;">PMS 286C</div></div>
+                </div>
+              </div>
+
+              <div style="border-top:1.5px solid #f0f0f0;padding-top:10px;flex:1;">
+                <div style="font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Special Notes</div>
+                <div style="font-size:11px;color:#555;line-height:1.5;">Satin finish on lettering. Proof approved by client — production to begin 10 July. All Pantone colours are approximate on screen.</div>
+              </div>
+
+              <!-- item indicator -->
+              <div style="display:flex;justify-content:space-between;align-items:center;background:#f8f8f8;border:1.5px solid #eee;border-radius:3px;padding:6px 10px;">
+                <div style="font-size:10px;color:#888;">Item 1 of 3</div>
+                <div style="font-size:10px;color:#888;">Page 1 of 3</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer -->
+          <div style="padding:10px 22px;border-top:2px solid #eee;display:flex;justify-content:space-between;align-items:center;background:#fafafa;">
+            <div style="font-size:9px;color:#ccc;">PromoWear.ie · Confidential Proof Document</div>
+            <div style="font-size:9px;color:#ccc;">Generated by PromoWear Mockup Builder</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Image dominates left half. All details on right — readable at a glance. Good for most orders.</div>
+    </div>
+
+    <!-- 4b: Vertical — image top, details below -->
+    <div class="dv-opt" id="4b">
+      <div class="dv-olabel"><a class="dv-oid" href="#4b">4b</a>Vertical — image top · details below</div>
+      <div class="dv-card" style="width:380px;background:#e0e0e0;padding:16px;">
+        <div style="background:#fff;border:1px solid #bbb;box-shadow:0 6px 20px rgba(0,0,0,.15);font-family:'Caveat',cursive;display:flex;flex-direction:column;min-height:680px;">
+
+          <!-- Header -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px 10px;border-bottom:3px solid #1a1a1a;">
+            <div>
+              <div style="font-size:20px;font-weight:700;line-height:1;">PromoWear.ie</div>
+              <div style="font-size:9px;color:#aaa;margin-top:2px;">info@promowear.ie</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="text-align:right;font-size:9px;color:#aaa;line-height:1.5;"><div>QT-2024-089</div><div>08 July 2025</div></div>
+              <div class="wf-box" style="width:58px;height:28px;font-size:8px;border-color:#ddd;">Client Logo</div>
+            </div>
+          </div>
+
+          <!-- BIG image top -->
+          <div style="padding:16px 18px 10px;">
+            <div style="background:#e8e8e8;border:2px solid #ccc;border-radius:4px;height:280px;display:flex;align-items:center;justify-content:center;position:relative;">
+              <!-- shirt -->
+              <div style="width:150px;height:188px;background:#bbb;border-radius:6px;position:relative;display:flex;align-items:center;justify-content:center;">
+                <div style="font-size:13px;color:#888;">T-Shirt</div>
+                <!-- logo on shirt -->
+                <div style="position:absolute;top:36px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.88);border:2px solid #4a90d9;border-radius:3px;padding:7px 18px;text-align:center;">
+                  <div style="font-size:12px;color:#2a5a99;font-weight:700;">CLIENT</div>
+                  <div style="font-size:9px;color:#4a90d9;">LOGO</div>
+                </div>
+                <!-- resize handle -->
+                <div style="position:absolute;bottom:-6px;right:-6px;width:12px;height:12px;background:#1a1a1a;border-radius:50%;border:2px solid #fff;"></div>
+              </div>
+              <div style="position:absolute;bottom:8px;font-size:9px;color:#aaa;">HD Mockup · 300dpi</div>
+            </div>
+            <!-- logo chips -->
+            <div style="display:flex;gap:5px;margin-top:8px;">
+              <div style="border:1.5px solid #4a90d9;border-radius:2px;padding:2px 8px;font-size:10px;color:#2a5a99;background:rgba(74,144,217,.08);">Logo_v2.png</div>
+              <div style="border:1.5px solid #ccc;border-radius:2px;padding:2px 8px;font-size:10px;color:#777;">Back_logo.svg</div>
+            </div>
+          </div>
+
+          <!-- Product title -->
+          <div style="padding:0 18px 8px;border-bottom:2px solid #f0f0f0;">
+            <div style="font-size:16px;font-weight:700;">Gildan 5000 Heavy Cotton</div>
+          </div>
+
+          <!-- Details in 2 columns below -->
+          <div style="padding:10px 18px;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;flex:1;">
+            <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">SKU</div><div style="font-size:11px;">GLD-5000</div></div>
+            <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Price</div><div style="font-size:11px;font-weight:700;">€12.50</div></div>
+            <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Quantity</div><div style="font-size:11px;">50 pcs</div></div>
+            <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Size</div><div style="font-size:11px;">L</div></div>
+            <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Colour</div><div style="font-size:11px;display:flex;align-items:center;gap:4px;"><span style="width:9px;height:9px;background:#222;border-radius:50%;display:inline-block;"></span>Black</div></div>
+            <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Material</div><div style="font-size:11px;">100% Cotton</div></div>
+            <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Decoration</div><div style="font-size:11px;">Embroidery</div></div>
+            <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Placement</div><div style="font-size:11px;">Left Chest</div></div>
+            <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">W × H</div><div style="font-size:11px;">10" × 8"</div></div>
+            <div><div style="font-size:8px;color:#bbb;text-transform:uppercase;">Thread</div><div style="font-size:11px;">PMS 286C</div></div>
+          </div>
+
+          <!-- Notes -->
+          <div style="padding:0 18px 10px;">
+            <div style="background:#fffbe8;border:1.5px solid #f0d090;border-radius:2px;padding:6px 10px;">
+              <div style="font-size:8px;font-weight:700;color:#7a5000;text-transform:uppercase;margin-bottom:2px;">Notes</div>
+              <div style="font-size:10px;color:#555;">Satin finish on lettering. Production begins 10 July.</div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div style="padding:8px 18px;border-top:2px solid #eee;display:flex;justify-content:space-between;background:#fafafa;">
+            <div style="font-size:9px;color:#ccc;">PromoWear.ie · Confidential</div>
+            <div style="font-size:9px;color:#ccc;">Page 1 of 3</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Tall portrait feel. Image gets full width — great for wide garments. Details neatly stacked below.</div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "build the real app — use <a class="dv-oid" href="#4a">4a</a> horizontal layout for 1-up PDF" · "add a cover page before these product pages" · "show 2-up with the same big-image horizontal style"</p>
+</section>
+
+<!-- TURN 3 -->
+<section class="dv-turn wf" id="t3">
+  <div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Export PDF — all 4 layout previews (A4)</span></div>
+  <div class="dv-opts">
+
+    <!-- 3a: 1-up -->
+    <div class="dv-opt" id="3a">
+      <div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>1-up — one product per page</div>
+      <div class="dv-card" style="width:340px;background:#e8e8e8;padding:14px;">
+        <div style="background:#fff;border:1px solid #ccc;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:22px 24px;display:flex;flex-direction:column;gap:12px;font-family:'Caveat',cursive;position:relative;min-height:460px;">
+          <div style="position:absolute;bottom:12px;right:16px;font-size:10px;color:#ccc;">Page 1 of 3</div>
+          <!-- header -->
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1a1a1a;padding-bottom:10px;">
+            <div><div style="font-size:20px;font-weight:700;">PromoWear.ie</div><div style="font-size:10px;color:#aaa;">info@promowear.ie</div></div>
+            <div style="text-align:right;">
+              <div class="wf-box" style="width:64px;height:28px;font-size:9px;border-color:#ddd;">Client Logo</div>
+              <div style="font-size:9px;color:#aaa;margin-top:2px;">Acme Corp</div>
+            </div>
+          </div>
+          <!-- meta strip -->
+          <div style="display:flex;gap:0;border:1.5px solid #eee;border-radius:2px;overflow:hidden;background:#f8f8f8;">
+            <div style="flex:1;padding:6px 10px;border-right:1.5px solid #eee;"><div style="font-size:8px;color:#aaa;text-transform:uppercase;">Quote #</div><div style="font-size:12px;font-weight:700;">QT-2024-089</div></div>
+            <div style="flex:1;padding:6px 10px;border-right:1.5px solid #eee;"><div style="font-size:8px;color:#aaa;text-transform:uppercase;">Date</div><div style="font-size:12px;font-weight:700;">08/07/2025</div></div>
+            <div style="flex:1;padding:6px 10px;"><div style="font-size:8px;color:#aaa;text-transform:uppercase;">Item</div><div style="font-size:12px;font-weight:700;">1 of 3</div></div>
+          </div>
+          <!-- large mockup -->
+          <div class="wf-box" style="height:160px;border-color:#ddd;background:#f0f0f0;flex-direction:column;gap:6px;font-size:12px;">
+            <div>🖼 HD Mockup — T-Shirt #1</div>
+            <div style="border:2px dashed #4a90d9;padding:3px 12px;border-radius:2px;font-size:10px;color:#4a90d9;">Logo placed · chest</div>
+          </div>
+          <!-- details grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;">
+            <div><div style="font-size:8px;color:#aaa;text-transform:uppercase;">Product</div><div style="font-size:11px;">Gildan 5000</div></div>
+            <div><div style="font-size:8px;color:#aaa;text-transform:uppercase;">SKU</div><div style="font-size:11px;">GLD-5000</div></div>
+            <div><div style="font-size:8px;color:#aaa;text-transform:uppercase;">Qty · Size</div><div style="font-size:11px;">50 pcs · L</div></div>
+            <div><div style="font-size:8px;color:#aaa;text-transform:uppercase;">Colour</div><div style="font-size:11px;">Black</div></div>
+            <div><div style="font-size:8px;color:#aaa;text-transform:uppercase;">Decoration</div><div style="font-size:11px;">Embroidery</div></div>
+            <div><div style="font-size:8px;color:#aaa;text-transform:uppercase;">Placement</div><div style="font-size:11px;">Left Chest</div></div>
+            <div><div style="font-size:8px;color:#aaa;text-transform:uppercase;">W × H</div><div style="font-size:11px;">10" × 8"</div></div>
+            <div><div style="font-size:8px;color:#aaa;text-transform:uppercase;">Thread</div><div style="font-size:11px;">PMS 286C</div></div>
+            <div><div style="font-size:8px;color:#aaa;text-transform:uppercase;">Price</div><div style="font-size:11px;font-weight:700;">€12.50</div></div>
+          </div>
+          <!-- notes -->
+          <div style="background:#fffbe8;border:1.5px solid #f0d090;border-radius:2px;padding:6px 10px;">
+            <div style="font-size:8px;font-weight:700;color:#7a5000;text-transform:uppercase;margin-bottom:2px;">Notes</div>
+            <div style="font-size:10px;color:#555;">Proof approved. Production begins 10 July.</div>
+          </div>
+          <div style="border-top:1.5px solid #eee;padding-top:8px;display:flex;justify-content:space-between;">
+            <div style="font-size:9px;color:#ccc;">PromoWear.ie · Confidential</div>
+            <div style="font-size:9px;color:#ccc;">Mockup Builder</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Largest mockup. All details visible. Best for premium presentations.</div>
+    </div>
+
+    <!-- 3b: 2-up -->
+    <div class="dv-opt" id="3b">
+      <div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>2-up — two products per page</div>
+      <div class="dv-card" style="width:420px;background:#e8e8e8;padding:14px;">
+        <div style="background:#fff;border:1px solid #ccc;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:20px 22px;display:flex;flex-direction:column;gap:10px;font-family:'Caveat',cursive;position:relative;min-height:460px;">
+          <div style="position:absolute;bottom:12px;right:16px;font-size:10px;color:#ccc;">Page 1 of 2</div>
+          <!-- header -->
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1a1a1a;padding-bottom:8px;">
+            <div style="font-size:18px;font-weight:700;">PromoWear.ie</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font-size:10px;color:#aaa;">QT-2024-089 · 08/07/2025</div>
+              <div class="wf-box" style="width:52px;height:22px;font-size:8px;border-color:#ddd;">Client Logo</div>
+            </div>
+          </div>
+          <!-- 2-column grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1;">
+            <!-- product 1 -->
+            <div style="display:flex;flex-direction:column;gap:6px;border:1.5px solid #eee;border-radius:3px;padding:10px;">
+              <div class="wf-box" style="height:120px;border-color:#ddd;background:#f0f0f0;flex-direction:column;gap:4px;font-size:11px;">
+                <div>T-Shirt #1</div>
+                <div style="border:1.5px dashed #4a90d9;padding:2px 8px;font-size:9px;color:#4a90d9;">Logo · chest</div>
+              </div>
+              <div style="font-size:12px;font-weight:700;">Gildan 5000</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;">
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">Qty</div><div style="font-size:10px;">50 pcs</div></div>
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">Colour</div><div style="font-size:10px;">Black</div></div>
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">Deco</div><div style="font-size:10px;">Embroidery</div></div>
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">Place.</div><div style="font-size:10px;">Left Chest</div></div>
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">W × H</div><div style="font-size:10px;">10" × 8"</div></div>
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">Price</div><div style="font-size:10px;font-weight:700;">€12.50</div></div>
+              </div>
+            </div>
+            <!-- product 2 -->
+            <div style="display:flex;flex-direction:column;gap:6px;border:1.5px solid #eee;border-radius:3px;padding:10px;">
+              <div class="wf-box" style="height:120px;border-color:#ddd;background:#f0f0f0;flex-direction:column;gap:4px;font-size:11px;">
+                <div>Hoodie #2</div>
+                <div style="border:1.5px dashed #4a90d9;padding:2px 8px;font-size:9px;color:#4a90d9;">Logo · chest</div>
+              </div>
+              <div style="font-size:12px;font-weight:700;">Gildan 18500</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;">
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">Qty</div><div style="font-size:10px;">30 pcs</div></div>
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">Colour</div><div style="font-size:10px;">Navy</div></div>
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">Deco</div><div style="font-size:10px;">Print</div></div>
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">Place.</div><div style="font-size:10px;">Back</div></div>
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">W × H</div><div style="font-size:10px;">12" × 10"</div></div>
+                <div><div style="font-size:7px;color:#aaa;text-transform:uppercase;">Price</div><div style="font-size:10px;font-weight:700;">€18.00</div></div>
+              </div>
+            </div>
+          </div>
+          <!-- shared notes -->
+          <div style="border-top:1.5px solid #eee;padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:9px;color:#aaa;">Proof approved. Production begins 10 July.</div>
+            <div style="font-size:9px;color:#ccc;">PromoWear.ie</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Good balance of detail and density. Works well for comparing similar variants.</div>
+    </div>
+
+    <!-- 3c: 3-up -->
+    <div class="dv-opt" id="3c">
+      <div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>3-up — three products per page</div>
+      <div class="dv-card" style="width:500px;background:#e8e8e8;padding:14px;">
+        <div style="background:#fff;border:1px solid #ccc;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:18px 20px;display:flex;flex-direction:column;gap:10px;font-family:'Caveat',cursive;position:relative;min-height:460px;">
+          <div style="position:absolute;bottom:12px;right:16px;font-size:10px;color:#ccc;">Page 1 of 1</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1a1a1a;padding-bottom:8px;">
+            <div style="font-size:18px;font-weight:700;">PromoWear.ie</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font-size:10px;color:#aaa;">QT-2024-089 · 08/07/2025</div>
+              <div class="wf-box" style="width:52px;height:22px;font-size:8px;border-color:#ddd;">Client Logo</div>
+            </div>
+          </div>
+          <!-- 3-column grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;flex:1;">
+            <div style="display:flex;flex-direction:column;gap:5px;border:1.5px solid #eee;border-radius:3px;padding:8px;">
+              <div class="wf-box" style="height:100px;border-color:#ddd;background:#f0f0f0;flex-direction:column;gap:3px;font-size:10px;"><div>T-Shirt #1</div><div style="border:1.5px dashed #4a90d9;padding:2px 6px;font-size:8px;color:#4a90d9;">Logo</div></div>
+              <div style="font-size:11px;font-weight:700;">Gildan 5000</div>
+              <div style="font-size:9px;color:#555;display:flex;flex-direction:column;gap:2px;">
+                <div>Qty: 50 · Black · L</div>
+                <div>Embroidery · Left Chest</div>
+                <div>10" × 8" · PMS 286C</div>
+                <div style="font-weight:700;color:#1a1a1a;">€12.50</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;border:1.5px solid #eee;border-radius:3px;padding:8px;">
+              <div class="wf-box" style="height:100px;border-color:#ddd;background:#f0f0f0;flex-direction:column;gap:3px;font-size:10px;"><div>Hoodie #2</div><div style="border:1.5px dashed #4a90d9;padding:2px 6px;font-size:8px;color:#4a90d9;">Logo</div></div>
+              <div style="font-size:11px;font-weight:700;">Gildan 18500</div>
+              <div style="font-size:9px;color:#555;display:flex;flex-direction:column;gap:2px;">
+                <div>Qty: 30 · Navy · XL</div>
+                <div>Print · Back</div>
+                <div>12" × 10" · CMYK</div>
+                <div style="font-weight:700;color:#1a1a1a;">€18.00</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;border:1.5px solid #eee;border-radius:3px;padding:8px;">
+              <div class="wf-box" style="height:100px;border-color:#ddd;background:#f0f0f0;flex-direction:column;gap:3px;font-size:10px;"><div>Cap #3</div><div style="border:1.5px dashed #4a90d9;padding:2px 6px;font-size:8px;color:#4a90d9;">Logo</div></div>
+              <div style="font-size:11px;font-weight:700;">Flexfit 110</div>
+              <div style="font-size:9px;color:#555;display:flex;flex-direction:column;gap:2px;">
+                <div>Qty: 20 · Red · O/S</div>
+                <div>Embroidery · Front</div>
+                <div>4" × 3" · PMS 186C</div>
+                <div style="font-weight:700;color:#1a1a1a;">€9.00</div>
+              </div>
+            </div>
+          </div>
+          <div style="border-top:1.5px solid #eee;padding-top:8px;display:flex;justify-content:space-between;">
+            <div style="font-size:9px;color:#aaa;">Proof approved. Production begins 10 July.</div>
+            <div style="font-size:9px;color:#ccc;">PromoWear.ie</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Efficient for medium orders. Fits 3 products on one page at a glance.</div>
+    </div>
+
+    <!-- 3d: 4-up -->
+    <div class="dv-opt" id="3d">
+      <div class="dv-olabel"><a class="dv-oid" href="#3d">3d</a>4-up — four products per page</div>
+      <div class="dv-card" style="width:480px;background:#e8e8e8;padding:14px;">
+        <div style="background:#fff;border:1px solid #ccc;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:18px 20px;display:flex;flex-direction:column;gap:10px;font-family:'Caveat',cursive;position:relative;min-height:460px;">
+          <div style="position:absolute;bottom:12px;right:16px;font-size:10px;color:#ccc;">Page 1 of 1</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1a1a1a;padding-bottom:8px;">
+            <div style="font-size:18px;font-weight:700;">PromoWear.ie</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font-size:10px;color:#aaa;">QT-2024-089 · 08/07/2025</div>
+              <div class="wf-box" style="width:52px;height:22px;font-size:8px;border-color:#ddd;">Client Logo</div>
+            </div>
+          </div>
+          <!-- 2x2 grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;flex:1;">
+            <div style="display:flex;flex-direction:column;gap:4px;border:1.5px solid #eee;border-radius:3px;padding:8px;">
+              <div class="wf-box" style="height:88px;border-color:#ddd;background:#f0f0f0;flex-direction:column;gap:2px;font-size:10px;"><div>T-Shirt #1</div><div style="border:1.5px dashed #4a90d9;padding:1px 6px;font-size:8px;color:#4a90d9;">Logo</div></div>
+              <div style="font-size:11px;font-weight:700;">Gildan 5000</div>
+              <div style="font-size:9px;color:#666;">50 pcs · Black · L · €12.50</div>
+              <div style="font-size:9px;color:#888;">Embroidery · Left Chest · 10"×8"</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;border:1.5px solid #eee;border-radius:3px;padding:8px;">
+              <div class="wf-box" style="height:88px;border-color:#ddd;background:#f0f0f0;flex-direction:column;gap:2px;font-size:10px;"><div>Hoodie #2</div><div style="border:1.5px dashed #4a90d9;padding:1px 6px;font-size:8px;color:#4a90d9;">Logo</div></div>
+              <div style="font-size:11px;font-weight:700;">Gildan 18500</div>
+              <div style="font-size:9px;color:#666;">30 pcs · Navy · XL · €18.00</div>
+              <div style="font-size:9px;color:#888;">Print · Back · 12"×10"</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;border:1.5px solid #eee;border-radius:3px;padding:8px;">
+              <div class="wf-box" style="height:88px;border-color:#ddd;background:#f0f0f0;flex-direction:column;gap:2px;font-size:10px;"><div>Cap #3</div><div style="border:1.5px dashed #4a90d9;padding:1px 6px;font-size:8px;color:#4a90d9;">Logo</div></div>
+              <div style="font-size:11px;font-weight:700;">Flexfit 110</div>
+              <div style="font-size:9px;color:#666;">20 pcs · Red · O/S · €9.00</div>
+              <div style="font-size:9px;color:#888;">Embroidery · Front · 4"×3"</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;border:1.5px solid #eee;border-radius:3px;padding:8px;">
+              <div class="wf-box" style="height:88px;border-color:#ddd;background:#f0f0f0;flex-direction:column;gap:2px;font-size:10px;"><div>Bag #4</div><div style="border:1.5px dashed #4a90d9;padding:1px 6px;font-size:8px;color:#4a90d9;">Logo</div></div>
+              <div style="font-size:11px;font-weight:700;">Tote Pro 500</div>
+              <div style="font-size:9px;color:#666;">100 pcs · Natural · €6.50</div>
+              <div style="font-size:9px;color:#888;">Print · Front · 8"×8"</div>
+            </div>
+          </div>
+          <div style="border-top:1.5px solid #eee;padding-top:8px;display:flex;justify-content:space-between;">
+            <div style="font-size:9px;color:#aaa;">Proof approved. Production begins 10 July.</div>
+            <div style="font-size:9px;color:#ccc;">PromoWear.ie</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Most compact. Best for large orders as a quick overview / sign-off sheet.</div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "build the real app based on <a class="dv-oid" href="#2a">2a</a>" · "show a cover/summary page at the front of the PDF" · "make 1-up full-bleed with a bigger mockup image"</p>
+</section>
+
+<!-- TURN 2 -->
+<section class="dv-turn wf" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Deeper <a class="dv-oid" href="#1b">1b</a> — all fields, PDF export modal &amp; PDF preview</span></div>
+  <div class="dv-opts">
+
+    <!-- 2a: Full 1b with all fields -->
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Full layout — all fields visible</div>
+      <div class="dv-card" style="width:980px;">
+        <!-- Top bar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#1a1a1a;color:#fff;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="font-family:'Caveat',cursive;font-size:20px;font-weight:700;">PromoWear.ie</div>
+            <div style="width:1px;height:18px;background:#555;"></div>
+            <div style="font-family:'Caveat',cursive;font-size:13px;color:#aaa;">Mockup Builder</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="font-family:'Caveat',cursive;font-size:12px;color:#888;">Auto-saved 2 min ago</div>
+            <div class="wf-btn sm" style="color:#fff;border-color:#555;">💾 Save Draft</div>
+            <div class="wf-btn sm" style="background:#4a90d9;border-color:#4a90d9;color:#fff;">⬇ Export PDF</div>
+          </div>
+        </div>
+
+        <!-- Item tabs -->
+        <div style="display:flex;align-items:stretch;background:#f0f0f0;border-bottom:2px solid #ddd;padding:0 12px;gap:3px;overflow-x:auto;">
+          <div style="padding:7px 14px;background:#fff;border:2px solid #ddd;border-bottom:none;border-radius:5px 5px 0 0;font-family:'Caveat',cursive;font-size:14px;font-weight:700;color:#1a1a1a;white-space:nowrap;display:flex;align-items:center;gap:6px;">
+            <span style="width:10px;height:10px;background:#333;border-radius:50%;display:inline-block;"></span>T-Shirt #1 <span style="color:#bbb;font-size:11px;">✕</span>
+          </div>
+          <div style="padding:7px 14px;background:#e8e8e8;border:2px solid #ddd;border-bottom:none;border-radius:5px 5px 0 0;font-family:'Caveat',cursive;font-size:14px;color:#777;white-space:nowrap;display:flex;align-items:center;gap:6px;">
+            <span style="width:10px;height:10px;background:#aaa;border-radius:50%;display:inline-block;"></span>Hoodie #2 <span style="color:#bbb;font-size:11px;">✕</span>
+          </div>
+          <div style="padding:7px 14px;background:#e8e8e8;border:2px solid #ddd;border-bottom:none;border-radius:5px 5px 0 0;font-family:'Caveat',cursive;font-size:14px;color:#777;white-space:nowrap;display:flex;align-items:center;gap:6px;">
+            <span style="width:10px;height:10px;background:#aaa;border-radius:50%;display:inline-block;"></span>Cap #3 <span style="color:#bbb;font-size:11px;">✕</span>
+          </div>
+          <div style="padding:7px 14px;border:2px dashed #ccc;border-bottom:none;border-radius:5px 5px 0 0;font-family:'Caveat',cursive;font-size:14px;color:#aaa;white-space:nowrap;cursor:pointer;margin-left:4px;">+ Add item</div>
+        </div>
+
+        <!-- Copy-from banner -->
+        <div style="padding:6px 14px;background:#fffbe8;border-bottom:2px dashed #f0c040;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div style="font-family:'Caveat',cursive;font-size:13px;color:#7a5000;font-weight:700;">⚡ Copy from T-Shirt #1:</div>
+          <div class="wf-checkbox"><div class="wf-checkbox-box wf-checked"><span class="wf-check-mark">✓</span></div>Same logos</div>
+          <div class="wf-checkbox"><div class="wf-checkbox-box wf-checked"><span class="wf-check-mark">✓</span></div>Same position</div>
+          <div class="wf-checkbox"><div class="wf-checkbox-box wf-checked"><span class="wf-check-mark">✓</span></div>Same size</div>
+          <div class="wf-checkbox"><div class="wf-checkbox-box"><span></span></div>Same product details</div>
+          <div class="wf-checkbox"><div class="wf-checkbox-box"><span></span></div>Same decoration</div>
+          <div style="font-family:'Caveat',cursive;font-size:11px;color:#a07020;margin-left:auto;">Ticked items copied — still editable ↓</div>
+        </div>
+
+        <div style="display:flex;height:560px;">
+
+          <!-- CENTER: Canvas -->
+          <div style="flex:1;background:#dedede;display:flex;flex-direction:column;min-width:0;">
+            <!-- Canvas toolbar -->
+            <div style="padding:5px 10px;background:#fff;border-bottom:2px solid #ddd;display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+              <div style="font-family:'Caveat',cursive;font-size:12px;color:#888;margin-right:4px;">Shirt:</div>
+              <div class="wf-btn sm">↔ Resize</div>
+              <div class="wf-btn sm">🎨 BG Color</div>
+              <div class="wf-btn sm">🖼 BG Image</div>
+              <div style="width:1px;height:18px;background:#ddd;margin:0 4px;"></div>
+              <div style="font-family:'Caveat',cursive;font-size:12px;color:#555;margin-right:2px;">Logo: <b>Logo_v2.png</b></div>
+              <div class="wf-btn sm">🔄 Rotate</div>
+              <div class="wf-btn sm">↕ Scale</div>
+              <div class="wf-btn sm">✂ Crop</div>
+              <div class="wf-btn sm">⟂ Persp.</div>
+              <div class="wf-btn sm" style="border-color:#c06000;color:#c06000;">🪄 Remove BG</div>
+              <div class="wf-btn sm" style="border-color:#c00;color:#c00;">🗑</div>
+            </div>
+            <!-- Canvas -->
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;">
+              <!-- custom BG indicator -->
+              <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,#d8d8d8,#d8d8d8 8px,#e4e4e4 8px,#e4e4e4 16px);"></div>
+              <!-- shirt -->
+              <div style="position:relative;z-index:1;width:280px;height:330px;background:#bbb;border:2px solid #999;border-radius:6px;display:flex;align-items:center;justify-content:center;">
+                <div style="font-family:'Caveat',cursive;font-size:16px;color:#888;">T-Shirt Image</div>
+                <!-- Logo 1 on chest -->
+                <div style="position:absolute;top:70px;left:50%;transform:translateX(-50%);border:2px dashed #4a90d9;padding:8px 20px;background:rgba(74,144,217,.15);border-radius:3px;cursor:move;">
+                  <div style="font-family:'Caveat',cursive;font-size:12px;color:#2a5a99;text-align:center;">Logo_v2.png</div>
+                  <div style="font-family:'Caveat',cursive;font-size:10px;color:#7aabdf;text-align:center;">drag · handles to resize</div>
+                  <!-- corner handles -->
+                  <div style="position:absolute;top:-5px;left:-5px;width:10px;height:10px;background:#4a90d9;border-radius:50%;"></div>
+                  <div style="position:absolute;top:-5px;right:-5px;width:10px;height:10px;background:#4a90d9;border-radius:50%;"></div>
+                  <div style="position:absolute;bottom:-5px;left:-5px;width:10px;height:10px;background:#4a90d9;border-radius:50%;"></div>
+                  <div style="position:absolute;bottom:-5px;right:-5px;width:10px;height:10px;background:#4a90d9;border-radius:50%;"></div>
+                </div>
+                <!-- Logo 2 on back/bottom -->
+                <div style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);border:2px dashed #999;padding:5px 14px;background:rgba(0,0,0,.06);border-radius:3px;cursor:move;">
+                  <div style="font-family:'Caveat',cursive;font-size:11px;color:#777;text-align:center;">Back_logo.svg</div>
+                </div>
+                <!-- resize handle for shirt -->
+                <div style="position:absolute;bottom:-8px;right:-8px;width:16px;height:16px;background:#1a1a1a;border-radius:50%;cursor:se-resize;border:2px solid #fff;"></div>
+              </div>
+            </div>
+            <div style="padding:5px 10px;background:#fff;border-top:2px solid #ddd;font-family:'Caveat',cursive;font-size:11px;color:#999;display:flex;gap:16px;">
+              <span>Zoom: 100%</span><span>Canvas: 1200×900px</span><span>Click logo to select · Drag to move</span>
+            </div>
+          </div>
+
+          <!-- RIGHT: Full detail panel -->
+          <div style="width:260px;border-left:2px solid #ddd;background:#fff;overflow-y:auto;display:flex;flex-direction:column;">
+
+            <!-- LOGOS -->
+            <div style="padding:10px 14px;border-bottom:2px solid #eee;">
+              <div class="wf-section-title">🖼 Logos</div>
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border:2px solid #4a90d9;border-radius:3px;background:rgba(74,144,217,.07);">
+                  <div style="font-family:'Caveat',cursive;font-size:13px;color:#2a5a99;">● Logo_v2.png</div>
+                  <div style="font-family:'Caveat',cursive;font-size:11px;color:#c00;cursor:pointer;">✕</div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border:2px solid #ccc;border-radius:3px;">
+                  <div style="font-family:'Caveat',cursive;font-size:13px;color:#555;">Back_logo.svg</div>
+                  <div style="font-family:'Caveat',cursive;font-size:11px;color:#c00;cursor:pointer;">✕</div>
+                </div>
+                <div class="wf-box" style="height:34px;font-size:12px;border-style:dashed;">+ Upload Logo (png/jpg/svg/webp/ai/eps)</div>
+              </div>
+            </div>
+
+            <!-- PRODUCT DETAILS -->
+            <div style="padding:10px 14px;border-bottom:2px solid #eee;">
+              <div class="wf-section-title">📋 Product Details</div>
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div>
+                  <div class="wf-sub">Product Name</div>
+                  <div class="wf-input">Gildan 5000 Heavy Cotton</div>
+                </div>
+                <div style="display:flex;gap:5px;">
+                  <div style="flex:1;">
+                    <div class="wf-sub">SKU / Item #</div>
+                    <div class="wf-input">GLD-5000</div>
+                  </div>
+                  <div style="flex:1;">
+                    <div class="wf-sub">Price (€)</div>
+                    <div class="wf-input">12.50</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:5px;">
+                  <div style="flex:1;">
+                    <div class="wf-sub">Quantity</div>
+                    <div class="wf-input">50</div>
+                  </div>
+                  <div style="flex:1;">
+                    <div class="wf-sub">Size</div>
+                    <div class="wf-input">L</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="wf-sub">Colour</div>
+                  <div style="display:flex;gap:5px;align-items:center;">
+                    <div style="width:22px;height:22px;background:#222;border-radius:50%;border:2px solid #ddd;"></div>
+                    <div class="wf-input" style="flex:1;">Black</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="wf-sub">Material / Fabric</div>
+                  <div class="wf-input">100% Ring-Spun Cotton</div>
+                </div>
+                <div>
+                  <div class="wf-sub">Other / Custom Field</div>
+                  <div class="wf-input" style="color:#aaa;">e.g. Ref #, Style…</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ARTWORK & DECORATION -->
+            <div style="padding:10px 14px;border-bottom:2px solid #eee;">
+              <div class="wf-section-title">🎨 Artwork &amp; Decoration</div>
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div>
+                  <div class="wf-sub">Decoration Type</div>
+                  <div class="wf-input" style="display:flex;justify-content:space-between;">Embroidery <span>▾</span></div>
+                  <div style="font-family:'Caveat',cursive;font-size:11px;color:#aaa;">Options: Embroidery · Print · Bespoke</div>
+                </div>
+                <div>
+                  <div class="wf-sub">Placement</div>
+                  <div class="wf-input">Left Chest</div>
+                </div>
+                <div>
+                  <div class="wf-sub">Artwork Dimensions</div>
+                  <div style="display:flex;gap:5px;">
+                    <div class="wf-input" style="flex:1;">W: 10"</div>
+                    <div class="wf-input" style="flex:1;">H: 8"</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="wf-sub">Thread / Ink Colour</div>
+                  <div class="wf-input">PMS 286C – Navy</div>
+                </div>
+                <div>
+                  <div class="wf-sub">Special Notes</div>
+                  <div class="wf-input" style="min-height:52px;">Satin finish on lettering</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">All fields from <a class="dv-oid" href="#1a">1a</a> are here. Copy-from banner lets users reuse logos &amp; placement across items instantly.</div>
+    </div>
+
+    <!-- 2b: PDF Export Modal -->
+    <div class="dv-opt" id="2b">
+      <div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>PDF export modal</div>
+      <div class="dv-card" style="width:440px;">
+        <!-- modal backdrop hint -->
+        <div style="background:#2a2a2a;padding:6px 12px;">
+          <div style="font-family:'Caveat',cursive;font-size:11px;color:#666;">← app behind (dimmed)</div>
+        </div>
+        <!-- modal -->
+        <div style="background:#fff;padding:22px;display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div class="wf-heading">Export PDF Mockup</div>
+              <div class="wf-sub" style="margin-top:2px;">3 items · HD quality</div>
+            </div>
+            <div style="font-family:'Caveat',cursive;font-size:20px;color:#ccc;cursor:pointer;">✕</div>
+          </div>
+
+          <hr class="wf-divider">
+
+          <!-- Client info -->
+          <div>
+            <div class="wf-section-title">Client Info</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div>
+                <div class="wf-sub">Client Name</div>
+                <div class="wf-input">Acme Corp Ltd</div>
+              </div>
+              <div>
+                <div class="wf-sub">Client Company</div>
+                <div class="wf-input">Acme Corp Ltd</div>
+              </div>
+              <div>
+                <div class="wf-sub">Client Logo (appears on PDF)</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="wf-box" style="flex:1;height:36px;font-size:12px;border-style:dashed;">📎 client_logo.png (uploaded)</div>
+                  <div class="wf-btn sm">Change</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order info -->
+          <div>
+            <div class="wf-section-title">Order / Quote</div>
+            <div style="display:flex;gap:8px;">
+              <div style="flex:1;">
+                <div class="wf-sub">Quote / Order #</div>
+                <div class="wf-input">QT-2024-089</div>
+              </div>
+              <div style="flex:1;">
+                <div class="wf-sub">Date</div>
+                <div class="wf-input">08/07/2025</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Extra notes -->
+          <div>
+            <div class="wf-section-title">Extra Notes (all pages)</div>
+            <div class="wf-input" style="min-height:60px;">Proof approved by client — production to begin 10 July. All Pantone colours are approximate on screen.</div>
+          </div>
+
+          <!-- Terms -->
+          <div>
+            <div class="wf-section-title">Terms &amp; Conditions</div>
+            <div class="wf-input" style="min-height:48px;font-size:12px;">All artwork is property of the client. PromoWear.ie reserves the right…</div>
+          </div>
+
+          <!-- Page options -->
+          <div>
+            <div class="wf-section-title">PDF Options</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div class="wf-checkbox"><div class="wf-checkbox-box wf-checked"><span class="wf-check-mark">✓</span></div>Include page numbers</div>
+              <div class="wf-checkbox"><div class="wf-checkbox-box wf-checked"><span class="wf-check-mark">✓</span></div>Include PromoWear.ie company logo in header</div>
+              <!-- Layout picker -->
+              <div style="margin-top:4px;">
+                <div class="wf-sub" style="margin-bottom:8px;">Products per page</div>
+                <div style="display:flex;gap:8px;">
+                  <!-- 1-up selected -->
+                  <div style="flex:1;border:2px solid #4a90d9;border-radius:4px;padding:8px 6px;background:rgba(74,144,217,.08);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                    <div style="width:42px;height:54px;border:1.5px solid #4a90d9;border-radius:2px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:2px;">
+                      <div style="height:8px;background:#c8dff6;border-radius:1px;"></div>
+                      <div style="flex:1;background:#4a90d9;border-radius:1px;opacity:.5;display:flex;align-items:center;justify-content:center;">
+                        <div style="width:60%;height:70%;background:#4a90d9;border-radius:1px;opacity:.9;"></div>
+                      </div>
+                      <div style="height:5px;background:#ddeeff;border-radius:1px;"></div>
+                    </div>
+                    <div style="font-family:'Caveat',cursive;font-size:12px;font-weight:700;color:#2a5a99;">1-up</div>
+                  </div>
+                  <!-- 2-up -->
+                  <div style="flex:1;border:2px solid #ddd;border-radius:4px;padding:8px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                    <div style="width:42px;height:54px;border:1.5px solid #ccc;border-radius:2px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:2px;">
+                      <div style="height:6px;background:#eee;border-radius:1px;"></div>
+                      <div style="flex:1;display:flex;gap:2px;">
+                        <div style="flex:1;background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:70%;height:60%;background:#bbb;border-radius:1px;"></div></div>
+                        <div style="flex:1;background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:70%;height:60%;background:#bbb;border-radius:1px;"></div></div>
+                      </div>
+                      <div style="height:4px;background:#eee;border-radius:1px;"></div>
+                    </div>
+                    <div style="font-family:'Caveat',cursive;font-size:12px;color:#888;">2-up</div>
+                  </div>
+                  <!-- 3-up -->
+                  <div style="flex:1;border:2px solid #ddd;border-radius:4px;padding:8px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                    <div style="width:42px;height:54px;border:1.5px solid #ccc;border-radius:2px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:2px;">
+                      <div style="height:6px;background:#eee;border-radius:1px;"></div>
+                      <div style="flex:1;display:flex;gap:1.5px;">
+                        <div style="flex:1;background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:65%;height:55%;background:#bbb;border-radius:1px;"></div></div>
+                        <div style="flex:1;background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:65%;height:55%;background:#bbb;border-radius:1px;"></div></div>
+                        <div style="flex:1;background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:65%;height:55%;background:#bbb;border-radius:1px;"></div></div>
+                      </div>
+                      <div style="height:4px;background:#eee;border-radius:1px;"></div>
+                    </div>
+                    <div style="font-family:'Caveat',cursive;font-size:12px;color:#888;">3-up</div>
+                  </div>
+                  <!-- 4-up -->
+                  <div style="flex:1;border:2px solid #ddd;border-radius:4px;padding:8px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                    <div style="width:42px;height:54px;border:1.5px solid #ccc;border-radius:2px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:2px;">
+                      <div style="height:6px;background:#eee;border-radius:1px;"></div>
+                      <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1.5px;">
+                        <div style="background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:60%;height:55%;background:#bbb;border-radius:1px;"></div></div>
+                        <div style="background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:60%;height:55%;background:#bbb;border-radius:1px;"></div></div>
+                        <div style="background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:60%;height:55%;background:#bbb;border-radius:1px;"></div></div>
+                        <div style="background:#ddd;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:60%;height:55%;background:#bbb;border-radius:1px;"></div></div>
+                      </div>
+                      <div style="height:4px;background:#eee;border-radius:1px;"></div>
+                    </div>
+                    <div style="font-family:'Caveat',cursive;font-size:12px;color:#888;">4-up</div>
+                  </div>
+                </div>
+                <div class="wf-note" style="margin-top:6px;">1-up = large HD mockup per page. 4-up = compact overview sheet.</div>
+              </div>
+              <div class="wf-checkbox"><div class="wf-checkbox-box"><span></span></div>Include terms &amp; conditions on last page</div>
+            </div>
+          </div>
+
+          <hr class="wf-divider">
+
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <div class="wf-btn">Cancel</div>
+            <div class="wf-btn primary" style="gap:6px;">⬇ Generate HD PDF</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Modal stays simple — client info, order number, notes, options. One click generates.</div>
+    </div>
+
+    <!-- 2c: PDF Page preview -->
+    <div class="dv-opt" id="2c">
+      <div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Export PDF — what one page looks like (A4)</div>
+      <div class="dv-card" style="width:420px;background:#f0f0f0;padding:16px;">
+        <!-- A4 page simulation -->
+        <div style="background:#fff;border:1px solid #ccc;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:28px 32px;display:flex;flex-direction:column;gap:16px;font-family:'Caveat',cursive;position:relative;">
+
+          <!-- page number -->
+          <div style="position:absolute;bottom:14px;right:20px;font-family:'Caveat',cursive;font-size:11px;color:#ccc;">Page 1 of 3</div>
+
+          <!-- Header: company + client logos -->
+          <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1a1a1a;padding-bottom:12px;">
+            <div>
+              <div style="font-size:22px;font-weight:700;color:#1a1a1a;">PromoWear.ie</div>
+              <div style="font-size:11px;color:#999;">www.promowear.ie · info@promowear.ie</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="wf-box" style="width:80px;height:36px;font-size:10px;border-style:solid;border-color:#ddd;">Client Logo</div>
+              <div style="font-size:10px;color:#aaa;margin-top:2px;">Acme Corp Ltd</div>
+            </div>
+          </div>
+
+          <!-- Order meta row -->
+          <div style="display:flex;gap:0;background:#f8f8f8;border:2px solid #eee;border-radius:3px;overflow:hidden;">
+            <div style="flex:1;padding:8px 12px;border-right:2px solid #eee;">
+              <div style="font-size:10px;color:#aaa;text-transform:uppercase;">Quote #</div>
+              <div style="font-size:14px;font-weight:700;">QT-2024-089</div>
+            </div>
+            <div style="flex:1;padding:8px 12px;border-right:2px solid #eee;">
+              <div style="font-size:10px;color:#aaa;text-transform:uppercase;">Date</div>
+              <div style="font-size:14px;font-weight:700;">08/07/2025</div>
+            </div>
+            <div style="flex:1;padding:8px 12px;">
+              <div style="font-size:10px;color:#aaa;text-transform:uppercase;">Item</div>
+              <div style="font-size:14px;font-weight:700;">1 of 3</div>
+            </div>
+          </div>
+
+          <!-- Main content: mockup + details -->
+          <div style="display:flex;gap:20px;align-items:flex-start;">
+            <!-- mockup image -->
+            <div style="flex:none;">
+              <div class="wf-box" style="width:160px;height:190px;border-color:#ccc;background:#ececec;flex-direction:column;gap:4px;">
+                <div style="font-size:13px;">T-Shirt</div>
+                <div style="font-size:10px;color:#bbb;">HD Mockup</div>
+                <div style="border:2px dashed #4a90d9;padding:4px 10px;margin-top:4px;border-radius:2px;">
+                  <div style="font-size:9px;color:#4a90d9;">Logo placed here</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- product details -->
+            <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+              <div style="font-size:17px;font-weight:700;color:#1a1a1a;">Gildan 5000 Heavy Cotton</div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;">
+                <div><div style="font-size:9px;color:#aaa;text-transform:uppercase;">SKU</div><div style="font-size:12px;">GLD-5000</div></div>
+                <div><div style="font-size:9px;color:#aaa;text-transform:uppercase;">Qty</div><div style="font-size:12px;">50 pcs</div></div>
+                <div><div style="font-size:9px;color:#aaa;text-transform:uppercase;">Colour</div><div style="font-size:12px;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#222;border-radius:50%;display:inline-block;"></span>Black</div></div>
+                <div><div style="font-size:9px;color:#aaa;text-transform:uppercase;">Size</div><div style="font-size:12px;">L</div></div>
+                <div><div style="font-size:9px;color:#aaa;text-transform:uppercase;">Material</div><div style="font-size:12px;">100% Cotton</div></div>
+                <div><div style="font-size:9px;color:#aaa;text-transform:uppercase;">Price</div><div style="font-size:12px;font-weight:700;">€12.50</div></div>
+              </div>
+
+              <hr class="wf-divider" style="margin:4px 0;">
+
+              <div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;">Decoration</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;">
+                <div><div style="font-size:9px;color:#aaa;text-transform:uppercase;">Type</div><div style="font-size:12px;">Embroidery</div></div>
+                <div><div style="font-size:9px;color:#aaa;text-transform:uppercase;">Placement</div><div style="font-size:12px;">Left Chest</div></div>
+                <div><div style="font-size:9px;color:#aaa;text-transform:uppercase;">W × H</div><div style="font-size:12px;">10" × 8"</div></div>
+                <div><div style="font-size:9px;color:#aaa;text-transform:uppercase;">Thread</div><div style="font-size:12px;">PMS 286C</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div style="background:#fffbe8;border:2px solid #f0d090;border-radius:3px;padding:8px 12px;">
+            <div style="font-size:10px;font-weight:700;color:#7a5000;text-transform:uppercase;margin-bottom:3px;">Notes</div>
+            <div style="font-size:12px;color:#555;">Proof approved by client — production to begin 10 July. All Pantone colours are approximate on screen.</div>
+          </div>
+
+          <!-- Footer -->
+          <div style="border-top:2px solid #eee;padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:10px;color:#ccc;">PromoWear.ie · Confidential</div>
+            <div style="font-size:10px;color:#ccc;">Generated by PromoWear Mockup Builder</div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Each product gets its own A4 page. Terms &amp; conditions appear on the final page. Company + client logos in header.</div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "build the real thing based on <a class="dv-oid" href="#2a">2a</a>" · "tweak the PDF page <a class="dv-oid" href="#2c">2c</a> — add a full-bleed mockup image" · "show a summary/cover page for the PDF"</p>
+</section>
+
+<!-- TURN 1 -->
+<section class="dv-turn wf" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Three layout approaches for the PromoWear.ie Mockup Builder</span></div>
+  <div class="dv-opts">
+
+    <!-- 1a: Three-panel layout -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Three-panel: Sidebar + Canvas + Details</div>
+      <div class="dv-card" style="width:900px">
+        <!-- Top bar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#1a1a1a;color:#fff;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-family:'Caveat',cursive;font-size:18px;font-weight:700;">PromoWear.ie</div>
+            <div style="font-family:'Caveat',cursive;font-size:12px;color:#aaa;">Mockup Builder</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div class="wf-btn sm" style="color:#fff;border-color:#666;">💾 Save Draft</div>
+            <div class="wf-btn sm primary" style="background:#4a90d9;border-color:#4a90d9;">⬇ Export PDF</div>
+          </div>
+        </div>
+
+        <div style="display:flex;height:580px;">
+          <!-- Left: image list -->
+          <div style="width:130px;border-right:2px solid #ddd;padding:10px;display:flex;flex-direction:column;gap:8px;background:#fafafa;overflow-y:auto;">
+            <div class="wf-label" style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;">Items</div>
+            <!-- active thumb -->
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <div class="wf-thumb active" style="height:80px;display:flex;align-items:center;justify-content:center;">
+                <div style="font-size:11px;color:#888;font-family:'Caveat',cursive;position:relative;z-index:1;">T-Shirt #1</div>
+              </div>
+              <div style="font-family:'Caveat',cursive;font-size:11px;color:#2a78d6;text-align:center;">● Active</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <div class="wf-thumb" style="height:80px;display:flex;align-items:center;justify-content:center;">
+                <div style="font-size:11px;color:#888;font-family:'Caveat',cursive;position:relative;z-index:1;">Hoodie #2</div>
+              </div>
+              <div style="font-family:'Caveat',cursive;font-size:11px;color:#999;text-align:center;">click to edit</div>
+            </div>
+            <div class="wf-box" style="height:60px;border-style:dashed;cursor:pointer;">
+              <div style="font-size:20px;">+</div>
+            </div>
+            <div class="wf-note" style="font-size:11px;">Add as many items as needed</div>
+          </div>
+
+          <!-- Center: canvas -->
+          <div style="flex:1;display:flex;flex-direction:column;background:#e8e8e8;">
+            <!-- canvas toolbar -->
+            <div style="padding:6px 10px;background:#fff;border-bottom:2px solid #ddd;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div class="wf-btn sm">↔ Resize shirt</div>
+              <div class="wf-btn sm">🎨 BG Color</div>
+              <div class="wf-btn sm">⬆ Upload BG</div>
+              <div style="flex:1;"></div>
+              <div style="font-family:'Caveat',cursive;font-size:12px;color:#888;">Selected logo: Logo_v2.png</div>
+              <div class="wf-btn sm">🔄 Rotate</div>
+              <div class="wf-btn sm">✂ Crop</div>
+              <div class="wf-btn sm">⟂ Perspective</div>
+              <div class="wf-btn sm" style="border-color:#c06000;color:#c06000;">🪄 Remove BG</div>
+            </div>
+
+            <!-- canvas area -->
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;">
+              <!-- tshirt placeholder -->
+              <div class="wf-img-placeholder" style="width:260px;height:300px;background:#ddd;border:2px solid #bbb;border-radius:4px;display:flex;align-items:center;justify-content:center;position:relative;">
+                <div style="font-family:'Caveat',cursive;font-size:16px;color:#999;position:relative;z-index:1;">T-Shirt Image</div>
+                <!-- logo overlay -->
+                <div style="position:absolute;top:60px;left:50%;transform:translateX(-50%);border:2px dashed #4a90d9;padding:8px 16px;background:rgba(74,144,217,.1);border-radius:3px;z-index:2;">
+                  <div style="font-family:'Caveat',cursive;font-size:12px;color:#2a5a99;">Logo here</div>
+                  <div style="font-family:'Caveat',cursive;font-size:10px;color:#4a90d9;">drag · resize · rotate</div>
+                </div>
+                <!-- resize handle indicator -->
+                <div style="position:absolute;bottom:-8px;right:-8px;width:16px;height:16px;background:#1a1a1a;border-radius:50%;z-index:3;"></div>
+              </div>
+            </div>
+
+            <!-- canvas bottom note -->
+            <div style="padding:6px 12px;background:#fff;border-top:2px solid #ddd;font-family:'Caveat',cursive;font-size:12px;color:#888;">
+              Zoom: 100% &nbsp;|&nbsp; Canvas: 1200×900px &nbsp;|&nbsp; Drag handles to move/resize logo
+            </div>
+          </div>
+
+          <!-- Right: details panel -->
+          <div style="width:240px;border-left:2px solid #ddd;padding:12px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;background:#fff;">
+
+            <!-- Logo uploads -->
+            <div>
+              <div class="wf-section-title">Logos</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <div class="wf-logo-chip">🖼 Logo_v2.png <span style="cursor:pointer;">✕</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <div class="wf-logo-chip">🖼 Back_logo.svg <span>✕</span></div>
+                </div>
+                <div class="wf-box" style="height:36px;font-size:12px;border-style:dashed;">+ Upload Logo</div>
+                <div class="wf-note">Multiple logos per item OK</div>
+              </div>
+            </div>
+
+            <hr class="wf-divider">
+
+            <!-- Product details -->
+            <div>
+              <div class="wf-section-title">Product Details</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div><div class="wf-sub">Product Name</div><div class="wf-input">Gildan 5000</div></div>
+                <div><div class="wf-sub">SKU / Item #</div><div class="wf-input">GLD-5000-BLK</div></div>
+                <div style="display:flex;gap:6px;">
+                  <div style="flex:1;"><div class="wf-sub">Qty</div><div class="wf-input">50</div></div>
+                  <div style="flex:1;"><div class="wf-sub">Size</div><div class="wf-input">L</div></div>
+                </div>
+                <div><div class="wf-sub">Color</div><div class="wf-input">Black ⬛</div></div>
+                <div><div class="wf-sub">Material</div><div class="wf-input">100% Cotton</div></div>
+              </div>
+            </div>
+
+            <hr class="wf-divider">
+
+            <!-- Artwork & decoration -->
+            <div>
+              <div class="wf-section-title">Artwork</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;gap:6px;">
+                  <div style="flex:1;"><div class="wf-sub">Width</div><div class="wf-input">10"</div></div>
+                  <div style="flex:1;"><div class="wf-sub">Height</div><div class="wf-input">8"</div></div>
+                </div>
+                <div><div class="wf-sub">Decoration</div>
+                  <div class="wf-input" style="display:flex;justify-content:space-between;">Embroidery <span>▾</span></div>
+                </div>
+                <div><div class="wf-sub">Placement</div><div class="wf-input">Left Chest</div></div>
+                <div><div class="wf-sub">Thread / Ink Color</div><div class="wf-input">PMS 286C</div></div>
+                <div><div class="wf-sub">Price</div><div class="wf-input">€12.50</div></div>
+                <div><div class="wf-sub">Notes</div><div class="wf-input" style="height:48px;"></div></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Best for power users — everything visible at once. Dense but efficient.</div>
+    </div>
+
+    <!-- 1b: Tabbed top layout -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Tab-per-item + Canvas + Collapsible right panel</div>
+      <div class="dv-card" style="width:860px">
+        <!-- Top bar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#1a1a1a;color:#fff;">
+          <div style="font-family:'Caveat',cursive;font-size:18px;font-weight:700;">PromoWear.ie <span style="font-size:13px;font-weight:400;color:#aaa;">/ Mockup Builder</span></div>
+          <div style="display:flex;gap:8px;">
+            <div class="wf-btn sm" style="color:#fff;border-color:#666;">💾 Save Draft</div>
+            <div class="wf-btn sm primary" style="background:#4a90d9;border-color:#4a90d9;">⬇ Export PDF</div>
+          </div>
+        </div>
+
+        <!-- Image tabs -->
+        <div style="display:flex;align-items:stretch;background:#f0f0f0;border-bottom:2px solid #ddd;overflow-x:auto;padding:0 10px;gap:2px;">
+          <div style="padding:8px 16px;background:#fff;border:2px solid #ddd;border-bottom:none;border-radius:4px 4px 0 0;font-family:'Caveat',cursive;font-size:14px;font-weight:700;color:#1a1a1a;white-space:nowrap;">🟦 T-Shirt #1 <span style="color:#999;font-size:12px;font-weight:400;">✕</span></div>
+          <div style="padding:8px 16px;background:#e8e8e8;border:2px solid #ddd;border-bottom:none;border-radius:4px 4px 0 0;font-family:'Caveat',cursive;font-size:14px;color:#666;white-space:nowrap;">🟦 Hoodie #2 <span style="color:#999;font-size:12px;">✕</span></div>
+          <div style="padding:8px 14px;background:transparent;border:2px dashed #ccc;border-bottom:none;border-radius:4px 4px 0 0;font-family:'Caveat',cursive;font-size:14px;color:#999;white-space:nowrap;">+ Add item</div>
+        </div>
+
+        <!-- Copy from previous banner -->
+        <div style="padding:7px 14px;background:#fff8e8;border-bottom:2px solid #f0d090;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div style="font-family:'Caveat',cursive;font-size:13px;color:#7a5000;font-weight:700;">⚡ Copy from T-Shirt #1:</div>
+          <div class="wf-checkbox"><div class="wf-checkbox-box wf-checked"><span class="wf-check-mark">✓</span></div>Same logos</div>
+          <div class="wf-checkbox"><div class="wf-checkbox-box wf-checked"><span class="wf-check-mark">✓</span></div>Same position</div>
+          <div class="wf-checkbox"><div class="wf-checkbox-box"><span class="wf-check-mark"></span></div>Same size</div>
+          <div class="wf-checkbox"><div class="wf-checkbox-box"><span class="wf-check-mark"></span></div>Same details</div>
+        </div>
+
+        <div style="display:flex;height:500px;">
+          <!-- Canvas -->
+          <div style="flex:1;background:#e0e0e0;display:flex;flex-direction:column;">
+            <!-- mini toolbar -->
+            <div style="padding:5px 10px;background:#fff;border-bottom:2px solid #ddd;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <div class="wf-btn sm">↔ Resize shirt</div>
+              <div class="wf-btn sm">🎨 BG</div>
+              <div style="width:1px;height:20px;background:#ddd;"></div>
+              <div style="font-family:'Caveat',cursive;font-size:12px;color:#888;">Logo: Logo_v2.png</div>
+              <div class="wf-btn sm">🔄 Rotate</div>
+              <div class="wf-btn sm">↕ Scale</div>
+              <div class="wf-btn sm">✂ Crop</div>
+              <div class="wf-btn sm">⟂ Persp.</div>
+              <div class="wf-btn sm" style="border-color:#c06000;color:#c06000;">🪄 Remove BG</div>
+              <div class="wf-btn sm" style="border-color:#c00;color:#c00;">🗑 Remove</div>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+              <div style="width:240px;height:280px;background:#ccc;border:2px solid #bbb;border-radius:4px;display:flex;align-items:center;justify-content:center;position:relative;">
+                <div style="font-family:'Caveat',cursive;font-size:15px;color:#888;">T-Shirt Image</div>
+                <div style="position:absolute;top:50px;left:50%;transform:translateX(-50%);border:2px dashed #4a90d9;padding:6px 14px;background:rgba(74,144,217,.12);border-radius:3px;">
+                  <div style="font-family:'Caveat',cursive;font-size:11px;color:#2a5a99;">LOGO • drag handles</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: collapsible accordions -->
+          <div style="width:230px;border-left:2px solid #ddd;background:#fff;overflow-y:auto;">
+            <!-- Logos section -->
+            <div style="border-bottom:2px solid #eee;">
+              <div style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:#f8f8f8;">
+                <div style="font-family:'Caveat',cursive;font-size:15px;font-weight:700;">🖼 Logos (2)</div>
+                <div style="font-size:12px;">▾</div>
+              </div>
+              <div style="padding:10px 14px;display:flex;flex-direction:column;gap:6px;">
+                <div class="wf-logo-chip">Logo_v2.png ✕</div>
+                <div class="wf-logo-chip">Back_logo.svg ✕</div>
+                <div class="wf-box" style="height:32px;font-size:12px;border-style:dashed;">+ Upload Logo</div>
+              </div>
+            </div>
+            <!-- Product details accordion -->
+            <div style="border-bottom:2px solid #eee;">
+              <div style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:#f8f8f8;">
+                <div style="font-family:'Caveat',cursive;font-size:15px;font-weight:700;">📋 Product Details</div>
+                <div style="font-size:12px;">▾</div>
+              </div>
+              <div style="padding:10px 14px;display:flex;flex-direction:column;gap:5px;">
+                <div class="wf-input">Gildan 5000</div>
+                <div class="wf-input">GLD-5000-BLK</div>
+                <div style="display:flex;gap:5px;">
+                  <div class="wf-input" style="flex:1;">50 pcs</div>
+                  <div class="wf-input" style="flex:1;">Black</div>
+                </div>
+              </div>
+            </div>
+            <!-- Artwork accordion -->
+            <div style="border-bottom:2px solid #eee;">
+              <div style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:#f8f8f8;">
+                <div style="font-family:'Caveat',cursive;font-size:15px;font-weight:700;">🎨 Artwork & Deco</div>
+                <div style="font-size:12px;">▾</div>
+              </div>
+              <div style="padding:10px 14px;display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;gap:5px;">
+                  <div class="wf-input" style="flex:1;">10" W</div>
+                  <div class="wf-input" style="flex:1;">8" H</div>
+                </div>
+                <div class="wf-input" style="display:flex;justify-content:space-between;">Embroidery ▾</div>
+                <div class="wf-input">Left Chest</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-note">Tab per item keeps each product isolated. Copy-from-previous bar is prominent. Good for orders with many variants.</div>
+    </div>
+
+    <!-- 1c: Step-by-step wizard -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Step-by-step wizard flow</div>
+      <div class="dv-card" style="width:680px">
+        <!-- Top bar -->
+        <div style="padding:8px 14px;background:#1a1a1a;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-family:'Caveat',cursive;font-size:18px;font-weight:700;color:#fff;">PromoWear.ie</div>
+          <div style="font-family:'Caveat',cursive;font-size:13px;color:#aaa;">Item 1 of 2</div>
+        </div>
+
+        <!-- Step indicator -->
+        <div style="padding:16px 24px;background:#f8f8f8;border-bottom:2px solid #ddd;display:flex;align-items:center;gap:0;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div class="step-dot done">✓</div>
+            <div style="font-family:'Caveat',cursive;font-size:12px;color:#666;">Upload</div>
+          </div>
+          <div style="flex:1;height:2px;background:#1a1a1a;margin-bottom:16px;"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div class="step-dot active">2</div>
+            <div style="font-family:'Caveat',cursive;font-size:12px;color:#4a90d9;font-weight:700;">Place Logos</div>
+          </div>
+          <div style="flex:1;height:2px;background:#ddd;margin-bottom:16px;"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div class="step-dot">3</div>
+            <div style="font-family:'Caveat',cursive;font-size:12px;color:#999;">Details</div>
+          </div>
+          <div style="flex:1;height:2px;background:#ddd;margin-bottom:16px;"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div class="step-dot">4</div>
+            <div style="font-family:'Caveat',cursive;font-size:12px;color:#999;">Export</div>
+          </div>
+        </div>
+
+        <!-- Step 2 content: Place Logos -->
+        <div style="display:flex;height:420px;">
+          <!-- center canvas -->
+          <div style="flex:1;background:#e4e4e4;display:flex;flex-direction:column;">
+            <div style="padding:5px 10px;background:#fff;border-bottom:2px solid #ddd;display:flex;gap:6px;flex-wrap:wrap;">
+              <div class="wf-btn sm">🔄 Rotate</div>
+              <div class="wf-btn sm">↕ Scale</div>
+              <div class="wf-btn sm">✂ Crop</div>
+              <div class="wf-btn sm">⟂ Persp.</div>
+              <div class="wf-btn sm" style="border-color:#c06000;color:#c06000;">🪄 Remove BG</div>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+              <div style="width:220px;height:260px;background:#ccc;border:2px solid #bbb;position:relative;display:flex;align-items:center;justify-content:center;border-radius:3px;">
+                <div style="font-family:'Caveat',cursive;font-size:14px;color:#888;">T-Shirt</div>
+                <div style="position:absolute;top:45px;left:50%;transform:translateX(-50%);border:2px dashed #4a90d9;padding:6px 20px;background:rgba(74,144,217,.12);border-radius:3px;text-align:center;">
+                  <div style="font-family:'Caveat',cursive;font-size:11px;color:#2a5a99;">Logo_v2.png</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right mini panel -->
+          <div style="width:200px;border-left:2px solid #ddd;background:#fff;padding:12px;display:flex;flex-direction:column;gap:10px;">
+            <div class="wf-section-title">Logos on this item</div>
+            <div class="wf-logo-chip" style="width:100%;">Logo_v2.png ✕</div>
+            <div class="wf-logo-chip" style="width:100%;">Back_logo.svg ✕</div>
+            <div class="wf-box" style="height:32px;font-size:12px;border-style:dashed;">+ Upload more</div>
+          </div>
+        </div>
+
+        <!-- Step nav -->
+        <div style="padding:10px 16px;border-top:2px solid #ddd;background:#f8f8f8;display:flex;justify-content:space-between;align-items:center;">
+          <div class="wf-btn">← Back</div>
+          <div style="font-family:'Caveat',cursive;font-size:13px;color:#888;">Step 2 of 4</div>
+          <div class="wf-btn primary">Next: Details →</div>
+        </div>
+      </div>
+      <div class="wf-note">Cleanest for first-time users. Linear flow reduces overwhelm. Slower for experienced users.</div>
+    </div>
+
+  </div>
+
+  <p class="dv-next">Try next: "go deeper on <a class="dv-oid" href="#1a">1a</a> — show the PDF export modal" · "combine <a class="dv-oid" href="#1a">1a</a>'s density with <a class="dv-oid" href="#1b">1b</a>'s copy-from-previous bar" · "show me what the export PDF looks like"</p>
+</section>
+
+</x-dc>
+</body>
+</html>

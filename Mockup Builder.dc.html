@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+  body { margin:0; background:#f1f5f9; font-family:'DM Sans',sans-serif; color:#0f172a; }
+  * { box-sizing:border-box; }
+  a { color:#3498B5; }
+  a:hover { color:#267a95; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .cb-canvas-wrap {
+    background-color:#e2e8f0;
+    background-image: linear-gradient(45deg,#cbd5e1 25%,transparent 25%), linear-gradient(-45deg,#cbd5e1 25%,transparent 25%), linear-gradient(45deg,transparent 75%,#cbd5e1 75%), linear-gradient(-45deg,transparent 75%,#cbd5e1 75%);
+    background-size:16px 16px;
+    background-position:0 0,0 8px,8px -8px,-8px 0px;
+  }
+  .cb-side-btn { display:flex;align-items:center;gap:7px;width:100%;padding:7px 10px;background:#fff;color:#334155;border:1.5px solid #e2e8f0;border-radius:6px;font:500 12px 'DM Sans',sans-serif;cursor:pointer;text-align:left; }
+  .cb-side-heading { font:700 11px 'DM Sans',sans-serif;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #f1f5f9;padding-bottom:7px;margin-bottom:8px; }
+  .cb-side-section { padding:12px 14px;border-bottom:1.5px solid #f1f5f9;display:flex;flex-direction:column;gap:6px; }
+</style>
+</helmet>
+
+<div style="height:100vh;background:#f1f5f9;display:flex;flex-direction:column;overflow:hidden;">
+
+  <!-- hidden file inputs -->
+  <input type="file" accept="image/png,image/jpeg,image/webp" ref="{{ mainImgInputRef }}" style="display:none" onChange="{{ handleMainImageChange }}">
+  <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,.ai,.eps" multiple="true" ref="{{ logoInputRef }}" style="display:none" onChange="{{ handleLogoChange }}">
+  <input type="file" accept="image/png,image/jpeg,image/webp" ref="{{ bgImgInputRef }}" style="display:none" onChange="{{ handleBgImageChange }}">
+  <input type="file" accept="image/png,image/jpeg,image/webp" ref="{{ clientLogoInputRef }}" style="display:none" onChange="{{ handleClientLogoChange }}">
+  <input type="file" accept=".zip" ref="{{ importInputRef }}" style="display:none" onChange="{{ handleImportChange }}">
+
+  <!-- TOP BAR -->
+  <div style="display:flex;align-items:center;height:56px;background:#0f172a;padding:0 20px;gap:14px;flex-shrink:0;">
+    <img src="uploads/company_logo-1783508565185.png" style="height:28px;object-fit:contain;" alt="{{ companyName }}">
+    <div style="width:1px;height:20px;background:#1e293b;"></div>
+    <div style="font:500 12px 'DM Sans',sans-serif;color:#64748b;">Mockup Builder</div>
+    <div style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;background:#1e293b;color:#cbd5e1;border-radius:6px;font:500 12px 'DM Sans',sans-serif;cursor:pointer;" onClick="{{ toggleLeftPanel }}">☰ {{ leftPanelToggleLabel }}</div>
+    <div style="flex:1;"></div>
+
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="width:6px;height:6px;background:#10b981;border-radius:50%;"></div>
+      <span style="font:400 11px 'DM Sans',sans-serif;color:#94a3b8;">{{ saveStatusLabel }}</span>
+    </div>
+
+    <div style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#1e293b;color:#cbd5e1;border-radius:6px;font:500 12px 'DM Sans',sans-serif;cursor:pointer;" onClick="{{ openOdooModal }}">🔗 Odoo</div>
+    <div style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#1e293b;color:#cbd5e1;border-radius:6px;font:500 12px 'DM Sans',sans-serif;cursor:pointer;" onClick="{{ triggerImport }}">⬆ Import</div>
+    <div style="display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:#1e293b;color:#cbd5e1;border-radius:6px;font:500 12px 'DM Sans',sans-serif;cursor:pointer;" onClick="{{ downloadBackup }}">⬇ Backup</div>
+    <div style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:#334155;color:#fff;border-radius:6px;font:600 12px 'DM Sans',sans-serif;cursor:pointer;" onClick="{{ saveDraftNow }}">💾 Save Draft</div>
+    <div style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:{{ accentColor }};color:#fff;border-radius:6px;font:600 12px 'DM Sans',sans-serif;cursor:pointer;" onClick="{{ openExportModal }}">↓ Export PDF</div>
+  </div>
+
+  <!-- ITEM TABS -->
+  <div style="display:flex;align-items:stretch;background:#f8fafc;border-bottom:1.5px solid #e2e8f0;padding:0 16px;gap:2px;flex-shrink:0;overflow-x:auto;">
+    <sc-for list="{{ items }}" as="item" hint-placeholder-count="1">
+      <sc-if value="{{ item.isActive }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border:1.5px solid #e2e8f0;border-bottom:none;border-radius:8px 8px 0 0;margin-bottom:-1.5px;font:600 13px 'DM Sans',sans-serif;color:#0f172a;white-space:nowrap;cursor:pointer;z-index:2;position:relative;">
+          <div style="width:8px;height:8px;background:{{ accentColor }};border-radius:50%;flex-shrink:0;"></div>
+          <input value="{{ item.label }}" onChange="{{ item.onLabelChange }}" style="border:none;outline:none;background:transparent;font:600 13px 'DM Sans',sans-serif;color:#0f172a;width:90px;">
+          <span style="color:#cbd5e1;font-size:14px;" onClick="{{ item.onRemove }}">×</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{ item.isInactive }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:transparent;border-radius:8px 8px 0 0;font:500 13px 'DM Sans',sans-serif;color:#64748b;white-space:nowrap;cursor:pointer;" onClick="{{ item.onSelect }}">
+          <div style="width:8px;height:8px;background:#cbd5e1;border-radius:50%;flex-shrink:0;"></div>
+          {{ item.label }}
+          <span style="color:#e2e8f0;font-size:14px;" onClick="{{ item.onRemove }}">×</span>
+        </div>
+      </sc-if>
+    </sc-for>
+    <div style="display:flex;align-items:center;gap:6px;padding:10px 14px;border:1.5px dashed #cbd5e1;border-radius:8px 8px 0 0;font:500 13px 'DM Sans',sans-serif;color:#94a3b8;margin:6px 0 0 6px;cursor:pointer;height:fit-content;" onClick="{{ addItem }}">+ Add item</div>
+  </div>
+
+  <!-- MAIN BODY -->
+  <div style="display:flex;flex:1;min-height:0;">
+
+    <!-- LEFT SIDEBAR (collapsible) -->
+    <sc-if value="{{ leftPanelVisible }}" hint-placeholder-val="{{ true }}">
+      <div style="width:260px;border-right:1.5px solid #e2e8f0;background:#fff;overflow-y:auto;display:flex;flex-direction:column;flex-shrink:0;min-height:0;">
+
+        <sc-if value="{{ showCopyBanner }}" hint-placeholder-val="{{ false }}">
+          <div class="cb-side-section" style="background:#fffbea;">
+            <div class="cb-side-heading" style="color:#92400e;border-bottom-color:#fde68a;">⚡ Copy from {{ firstItemLabel }}</div>
+            <sc-for list="{{ copyFlagList }}" as="flag" hint-placeholder-count="5">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;" onClick="{{ flag.toggle }}">
+                <sc-if value="{{ flag.checked }}" hint-placeholder-val="{{ false }}">
+                  <div style="width:15px;height:15px;background:#f59e0b;border-radius:3px;border:1.5px solid #f59e0b;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <div style="width:8px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg);margin-top:-1px;"></div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ flag.unchecked }}" hint-placeholder-val="{{ true }}">
+                  <div style="width:15px;height:15px;background:#fff;border-radius:3px;border:1.5px solid #fcd34d;flex-shrink:0;"></div>
+                </sc-if>
+                <span style="font:500 12px 'DM Sans',sans-serif;color:#78350f;">{{ flag.label }}</span>
+              </label>
+            </sc-for>
+            <div style="font:400 10px 'DM Sans',sans-serif;color:#b45309;">Unticking restores your own edits</div>
+          </div>
+        </sc-if>
+
+        <div class="cb-side-section">
+          <div class="cb-side-heading">History (unlimited)</div>
+          <div style="display:flex;gap:6px;">
+            <div class="cb-side-btn" style="flex:1;justify-content:center;" onClick="{{ undo }}">↶ Undo</div>
+            <div class="cb-side-btn" style="flex:1;justify-content:center;" onClick="{{ redo }}">↷ Redo</div>
+          </div>
+        </div>
+
+        <div class="cb-side-section">
+          <div class="cb-side-heading">Zoom</div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <div class="cb-side-btn" style="flex:0 0 auto;justify-content:center;width:34px;padding:7px;" onClick="{{ zoomOut }}">−</div>
+            <div style="flex:1;text-align:center;font:600 12px 'DM Sans',sans-serif;color:#334155;">{{ zoomPercentLabel }}</div>
+            <div class="cb-side-btn" style="flex:0 0 auto;justify-content:center;width:34px;padding:7px;" onClick="{{ zoomIn }}">+</div>
+          </div>
+          <div class="cb-side-btn" style="justify-content:center;" onClick="{{ zoomReset }}">Reset to 100%</div>
+          <div style="font:400 10px 'DM Sans',sans-serif;color:#94a3b8;">Or hold Ctrl + scroll over canvas</div>
+        </div>
+
+        <div class="cb-side-section">
+          <div class="cb-side-heading">Canvas Size</div>
+          <select value="{{ canvasBaseSize }}" onChange="{{ setCanvasBaseSize }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:500 12px 'DM Sans',sans-serif;color:#334155;background:#fff;">
+            <sc-for list="{{ canvasSizeOptions }}" as="sz" hint-placeholder-count="5">
+              <option value="{{ sz }}">{{ sz }} × {{ sz }} px</option>
+            </sc-for>
+          </select>
+          <div style="font:400 10px 'DM Sans',sans-serif;color:#94a3b8;">Working resolution — bigger = sharper HD export</div>
+        </div>
+
+        <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+          <div class="cb-side-section">
+            <div class="cb-side-heading">Selected Size (px)</div>
+            <div style="display:flex;gap:8px;">
+              <div style="flex:1;">
+                <div style="font:600 10px 'DM Sans',sans-serif;color:#94a3b8;text-transform:uppercase;margin-bottom:4px;">Width</div>
+                <input type="number" value="{{ selectedWidth }}" onChange="{{ setSelectedWidth }}" style="width:100%;padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px;">
+              </div>
+              <div style="flex:1;">
+                <div style="font:600 10px 'DM Sans',sans-serif;color:#94a3b8;text-transform:uppercase;margin-bottom:4px;">Height</div>
+                <input type="number" value="{{ selectedHeight }}" onChange="{{ setSelectedHeight }}" style="width:100%;padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px;">
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <div class="cb-side-section">
+          <div class="cb-side-heading">Garment</div>
+          <div class="cb-side-btn" onClick="{{ triggerMainImageUpload }}">🖼 {{ mainImageBtnLabel }}</div>
+          <div class="cb-side-btn" onClick="{{ toggleShirtLock }}">{{ shirtLockLabel }}</div>
+          <div style="position:relative;">
+            <div class="cb-side-btn" onClick="{{ toggleBgColorPopover }}">🎨 BG Colour</div>
+            <sc-if value="{{ bgColorPopoverOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:38px;left:0;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);display:flex;gap:6px;z-index:20;align-items:center;">
+                <sc-for list="{{ bgColorSwatches }}" as="sw" hint-placeholder-count="5">
+                  <div style="width:24px;height:24px;border-radius:50%;border:1.5px solid #e2e8f0;background:{{ sw.color }};cursor:pointer;" onClick="{{ sw.select }}"></div>
+                </sc-for>
+                <input type="color" onChange="{{ handleCustomBgColor }}" style="width:24px;height:24px;border:none;padding:0;cursor:pointer;">
+              </div>
+            </sc-if>
+          </div>
+          <div class="cb-side-btn" onClick="{{ triggerBgImageUpload }}">🖼 BG Image</div>
+          <sc-if value="{{ hasBgImage }}" hint-placeholder-val="{{ false }}">
+            <div class="cb-side-btn" style="background:#fff5f5;color:#ef4444;border-color:#fecaca;" onClick="{{ removeBgImage }}">🗑 Remove BG Image</div>
+          </sc-if>
+          <sc-if value="{{ isGarmentSelected }}" hint-placeholder-val="{{ false }}">
+            <div class="cb-side-btn" style="background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe;font-weight:600;" onClick="{{ removeBgSelected }}">✨ Remove Shirt BG</div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ isLogoSelected }}" hint-placeholder-val="{{ false }}">
+          <div class="cb-side-section">
+            <div class="cb-side-heading" style="color:#1a5f75;border-bottom-color:{{ accentColor }};">🖼 Logo Selected</div>
+            <div class="cb-side-btn" onClick="{{ rotateSelected }}">🔄 Rotate 90°</div>
+
+            <sc-if value="{{ perspectiveActive }}" hint-placeholder-val="{{ false }}">
+              <div class="cb-side-btn" style="background:{{ accentColor }};color:#fff;border:none;font-weight:600;justify-content:center;" onClick="{{ applyPerspective }}">✓ Apply Perspective</div>
+              <div class="cb-side-btn" style="justify-content:center;" onClick="{{ cancelPerspective }}">✕ Cancel Perspective</div>
+            </sc-if>
+            <sc-if value="{{ perspectiveInactive }}" hint-placeholder-val="{{ true }}">
+              <div class="cb-side-btn" onClick="{{ startPerspective }}">⟂ Perspective (drag corners)</div>
+            </sc-if>
+
+            <sc-if value="{{ cropActive }}" hint-placeholder-val="{{ false }}">
+              <div class="cb-side-btn" style="background:{{ accentColor }};color:#fff;border:none;font-weight:600;justify-content:center;" onClick="{{ applyCrop }}">✓ Apply Crop</div>
+              <div class="cb-side-btn" style="justify-content:center;" onClick="{{ cancelCrop }}">✕ Cancel Crop</div>
+            </sc-if>
+            <sc-if value="{{ cropInactive }}" hint-placeholder-val="{{ true }}">
+              <div class="cb-side-btn" onClick="{{ startCrop }}">✂ Crop (adjust rectangle)</div>
+            </sc-if>
+
+            <div class="cb-side-btn" style="background:#f5f3ff;color:#7c3aed;border-color:#ddd6fe;font-weight:600;" onClick="{{ removeBgSelected }}">✨ Remove BG</div>
+            <div class="cb-side-btn" onClick="{{ resetTransformSelected }}">↺ Reset Transform</div>
+            <div class="cb-side-btn" style="background:#fff5f5;color:#ef4444;border-color:#fecaca;" onClick="{{ deleteSelected }}">🗑 Remove Logo</div>
+          </div>
+        </sc-if>
+
+      </div>
+    </sc-if>
+
+    <!-- CANVAS AREA -->
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;">
+
+      <!-- CANVAS -->
+      <div class="cb-canvas-wrap" ref="{{ canvasWrapOuterRef }}" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-height:0;overflow:hidden;">
+        <div style="position:relative;width:{{ canvasDisplaySize }}px;height:{{ canvasDisplaySize }}px;">
+          <div style="position:absolute;inset:0;background:#fff;box-shadow:0 2px 16px rgba(0,0,0,.1);overflow:hidden;">
+            <canvas ref="{{ canvasRef }}" width="{{ canvasBaseSize }}" height="{{ canvasBaseSize }}"></canvas>
+          </div>
+          <sc-if value="{{ showUploadPrompt }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+              <div style="border:2.5px dashed #c4e8f2;border-radius:10px;padding:32px 40px;text-align:center;background:#f8fdfe;pointer-events:auto;cursor:pointer;" onClick="{{ triggerMainImageUpload }}">
+                <div style="font-size:32px;margin-bottom:8px;">⬆</div>
+                <div style="font:600 15px 'DM Sans',sans-serif;color:#0f172a;margin-bottom:4px;">Upload garment image</div>
+                <div style="font:400 12px 'DM Sans',sans-serif;color:#94a3b8;">PNG · JPG · WEBP</div>
+              </div>
+            </div>
+          </sc-if>
+          <div style="position:absolute;bottom:-6px;right:-6px;width:16px;height:16px;background:{{ accentColor }};border:2px solid #fff;border-radius:4px;cursor:nwse-resize;box-shadow:0 1px 4px rgba(0,0,0,.3);" onMouseDown="{{ startCanvasResize }}"></div>
+        </div>
+      </div>
+
+      <!-- STATUS BAR -->
+      <div style="display:flex;align-items:center;gap:20px;padding:6px 16px;background:#fff;border-top:1.5px solid #e2e8f0;flex-shrink:0;">
+        <span style="font:400 11px 'DM Sans',sans-serif;color:#94a3b8;">Zoom: {{ zoomPercentLabel }} · Ctrl+Scroll to zoom · Drag corner grip to resize canvas</span>
+        <span style="font:400 11px 'DM Sans',sans-serif;color:#e2e8f0;">|</span>
+        <span style="font:400 11px 'DM Sans',sans-serif;color:#94a3b8;">Click a logo to select · Del key removes it · Ctrl+Z/Y undo/redo</span>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div style="width:280px;border-left:1.5px solid #e2e8f0;background:#fff;overflow-y:auto;display:flex;flex-direction:column;flex-shrink:0;min-height:0;">
+
+      <!-- LOGOS -->
+      <div style="padding:14px 16px;border-bottom:1.5px solid #f1f5f9;">
+        <div style="font:700 12px 'DM Sans',sans-serif;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #f1f5f9;padding-bottom:8px;margin-bottom:10px;">🖼 Logos</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <sc-for list="{{ logoChips }}" as="chip" hint-placeholder-count="1">
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:7px;font:500 12px 'DM Sans',sans-serif;color:#334155;">
+              <span style="font-size:14px;">🖼</span>
+              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ chip.filename }}</span>
+              <span style="color:#94a3b8;cursor:pointer;font-size:13px;" onClick="{{ chip.remove }}">×</span>
+            </div>
+          </sc-for>
+          <div style="border:2px dashed #c4e8f2;border-radius:8px;padding:12px;text-align:center;background:#f8fdfe;cursor:pointer;" onClick="{{ triggerLogoUpload }}">
+            <div style="font-size:18px;margin-bottom:4px;">↑</div>
+            <div style="font:500 12px 'DM Sans',sans-serif;color:#0f172a;margin-bottom:2px;">Upload Logo (multiple OK)</div>
+            <div style="font:400 10px 'DM Sans',sans-serif;color:#94a3b8;">PNG · JPG · SVG · WEBP · AI · EPS</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCT DETAILS -->
+      <div style="padding:14px 16px;border-bottom:1.5px solid #f1f5f9;">
+        <div style="font:700 12px 'DM Sans',sans-serif;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #f1f5f9;padding-bottom:8px;margin-bottom:10px;">📋 Product Details</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Product Name</div>
+            <input value="{{ activeItem.details.productName }}" onChange="{{ updateProductName }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">SKU</div>
+              <input value="{{ activeItem.details.sku }}" onChange="{{ updateSku }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:500 12px 'JetBrains Mono',monospace;color:#0f172a;">
+            </div>
+            <div style="flex:1;">
+              <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Price (€)</div>
+              <input value="{{ activeItem.details.price }}" onChange="{{ updatePrice }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Quantity</div>
+              <input value="{{ activeItem.details.quantity }}" onChange="{{ updateQuantity }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+            </div>
+            <div style="flex:1;">
+              <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Size</div>
+              <input value="{{ activeItem.details.size }}" onChange="{{ updateSize }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+            </div>
+          </div>
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Colour</div>
+            <input value="{{ activeItem.details.colour }}" onChange="{{ updateColour }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+          </div>
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Material / Fabric</div>
+            <input value="{{ activeItem.details.material }}" onChange="{{ updateMaterial }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+          </div>
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Other</div>
+            <input value="{{ activeItem.details.other }}" onChange="{{ updateOther }}" placeholder="Custom field…" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+          </div>
+        </div>
+      </div>
+
+      <!-- ARTWORK & DECORATION -->
+      <div style="padding:14px 16px;">
+        <div style="font:700 12px 'DM Sans',sans-serif;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;border-bottom:1.5px solid #f1f5f9;padding-bottom:8px;margin-bottom:10px;">🎨 Artwork &amp; Decoration</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Decoration Type</div>
+            <select value="{{ activeItem.details.decorationType }}" onChange="{{ updateDecorationType }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;background:#fff;">
+              <sc-for list="{{ decorationOptions }}" as="opt" hint-placeholder-count="3">
+                <option value="{{ opt }}">{{ opt }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Placement</div>
+            <input value="{{ activeItem.details.placement }}" onChange="{{ updatePlacement }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div style="flex:1;">
+              <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Width (in)</div>
+              <input value="{{ activeItem.details.artworkW }}" onChange="{{ updateArtworkW }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+            </div>
+            <div style="flex:1;">
+              <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Height (in)</div>
+              <input value="{{ activeItem.details.artworkH }}" onChange="{{ updateArtworkH }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+            </div>
+          </div>
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Thread / Ink Colour</div>
+            <input value="{{ activeItem.details.threadColour }}" onChange="{{ updateThreadColour }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;">
+          </div>
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Special Notes</div>
+            <textarea onChange="{{ updateNotes }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 13px 'DM Sans',sans-serif;color:#0f172a;min-height:60px;resize:vertical;">{{ activeItem.details.notes }}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT MODAL -->
+  <sc-if value="{{ exportModalOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;" onClick="{{ closeExportModal }}">
+      <div style="background:#fff;border-radius:14px;width:520px;max-height:90vh;overflow-y:auto;padding:28px;display:flex;flex-direction:column;gap:16px;" onClick="{{ stopPropagation }}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font:700 20px 'DM Sans',sans-serif;color:#0f172a;">Export PDF Mockup</div>
+            <div style="font:400 13px 'DM Sans',sans-serif;color:#64748b;margin-top:4px;">{{ itemCount }} item(s) · HD quality</div>
+          </div>
+          <div style="width:32px;height:32px;border-radius:7px;border:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#94a3b8;cursor:pointer;" onClick="{{ closeExportModal }}">×</div>
+        </div>
+        <div style="height:1.5px;background:#f1f5f9;"></div>
+
+        <div>
+          <div style="font:700 12px 'DM Sans',sans-serif;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Client Info</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;">
+                <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;margin-bottom:5px;">Client Name</div>
+                <input value="{{ clientInfo.name }}" onChange="{{ updateClientName }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;">
+              </div>
+              <div style="flex:1;">
+                <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;margin-bottom:5px;">Quote / Order #</div>
+                <input value="{{ exportSettings.quoteNumber }}" onChange="{{ updateQuoteNumber }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:12px;">
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;">
+                <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;margin-bottom:5px;">Date</div>
+                <input type="date" value="{{ exportSettings.date }}" onChange="{{ updateDate }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;">
+              </div>
+              <div style="flex:1;">
+                <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;margin-bottom:5px;">Client Logo</div>
+                <div style="display:flex;align-items:center;gap:6px;padding:7px 10px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:6px;cursor:pointer;" onClick="{{ triggerClientLogoUpload }}">
+                  <span style="font-size:13px;">📎</span>
+                  <span style="font:500 12px 'DM Sans',sans-serif;color:#334155;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ clientLogoLabel }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="height:1.5px;background:#f1f5f9;"></div>
+
+        <div>
+          <div style="font:700 12px 'DM Sans',sans-serif;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">📐 Page Layout</div>
+          <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;margin-bottom:8px;">Card orientation</div>
+          <div style="display:flex;gap:10px;margin-bottom:14px;">
+            <sc-for list="{{ orientationOptions }}" as="o" hint-placeholder-count="2">
+              <sc-if value="{{ o.isSelected }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:1;border:2px solid {{ accentColor }};border-radius:8px;padding:12px 8px;background:#e8f6fa;cursor:pointer;text-align:center;">
+                  <div style="font:700 12px 'DM Sans',sans-serif;color:#1a5f75;">{{ o.label }}</div>
+                  <div style="font:400 10px 'DM Sans',sans-serif;color:{{ accentColor }};margin-top:4px;">{{ o.desc }}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ o.isUnselected }}" hint-placeholder-val="{{ true }}">
+                <div style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:12px 8px;cursor:pointer;text-align:center;" onClick="{{ o.select }}">
+                  <div style="font:500 12px 'DM Sans',sans-serif;color:#64748b;">{{ o.label }}</div>
+                  <div style="font:400 10px 'DM Sans',sans-serif;color:#94a3b8;margin-top:4px;">{{ o.desc }}</div>
+                </div>
+              </sc-if>
+            </sc-for>
+          </div>
+          <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;margin-bottom:8px;">Products per page</div>
+          <div style="display:flex;gap:8px;">
+            <sc-for list="{{ perPageOptions }}" as="pp" hint-placeholder-count="4">
+              <sc-if value="{{ pp.isSelected }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:1;border:2px solid {{ accentColor }};border-radius:7px;padding:10px 4px;background:#e8f6fa;cursor:pointer;text-align:center;">
+                  <div style="font:700 14px 'DM Sans',sans-serif;color:#1a5f75;">{{ pp.n }}</div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ pp.isUnselected }}" hint-placeholder-val="{{ true }}">
+                <div style="flex:1;border:1.5px solid #e2e8f0;border-radius:7px;padding:10px 4px;cursor:pointer;text-align:center;" onClick="{{ pp.select }}">
+                  <div style="font:500 14px 'DM Sans',sans-serif;color:#64748b;">{{ pp.n }}</div>
+                </div>
+              </sc-if>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="height:1.5px;background:#f1f5f9;"></div>
+
+        <div>
+          <div style="font:700 12px 'DM Sans',sans-serif;color:#0f172a;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Notes &amp; Options</div>
+          <textarea onChange="{{ updateExtraNotes }}" placeholder="Proof approved, production notes…" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px;resize:vertical;min-height:56px;margin-bottom:10px;">{{ exportSettings.extraNotes }}</textarea>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;" onClick="{{ togglePageNumbers }}">
+              <sc-if value="{{ exportSettings.includePageNumbers }}" hint-placeholder-val="{{ true }}"><div style="width:15px;height:15px;background:{{ accentColor }};border-radius:3px;"></div></sc-if>
+              <sc-if value="{{ notIncludePageNumbers }}" hint-placeholder-val="{{ false }}"><div style="width:15px;height:15px;background:#fff;border-radius:3px;border:1.5px solid #cbd5e1;"></div></sc-if>
+              <span style="font-size:13px;">Include page numbers</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;" onClick="{{ toggleTerms }}">
+              <sc-if value="{{ exportSettings.includeTerms }}" hint-placeholder-val="{{ false }}"><div style="width:15px;height:15px;background:{{ accentColor }};border-radius:3px;"></div></sc-if>
+              <sc-if value="{{ notIncludeTerms }}" hint-placeholder-val="{{ true }}"><div style="width:15px;height:15px;background:#fff;border-radius:3px;border:1.5px solid #cbd5e1;"></div></sc-if>
+              <span style="font-size:13px;">Terms &amp; conditions (footer, every page)</span>
+            </label>
+            <sc-if value="{{ exportSettings.includeTerms }}" hint-placeholder-val="{{ false }}">
+              <textarea onChange="{{ updateTermsText }}" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:12px;resize:vertical;min-height:56px;">{{ exportSettings.termsText }}</textarea>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:4px;">
+          <div style="display:inline-flex;align-items:center;padding:8px 16px;background:#fff;color:#0f172a;border:1.5px solid #e2e8f0;border-radius:7px;font:500 13px 'DM Sans',sans-serif;cursor:pointer;" onClick="{{ closeExportModal }}">Cancel</div>
+          <sc-if value="{{ exporting }}" hint-placeholder-val="{{ false }}">
+            <div style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#94a3b8;color:#fff;border-radius:7px;font:600 13px 'DM Sans',sans-serif;">
+              <span style="display:inline-block;width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span> Generating…
+            </div>
+          </sc-if>
+          <sc-if value="{{ notExporting }}" hint-placeholder-val="{{ true }}">
+            <div style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:{{ accentColor }};color:#fff;border-radius:7px;font:600 13px 'DM Sans',sans-serif;cursor:pointer;" onClick="{{ generatePDF }}">↓ Generate HD PDF</div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ODOO MODAL (stub) -->
+  <sc-if value="{{ odooModalOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;" onClick="{{ closeOdooModal }}">
+      <div style="background:#fff;border-radius:14px;width:440px;padding:28px;display:flex;flex-direction:column;gap:16px;" onClick="{{ stopPropagation }}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font:700 20px 'DM Sans',sans-serif;color:#0f172a;">🔗 Odoo Integration</div>
+            <div style="display:inline-flex;margin-top:6px;padding:3px 9px;background:#fef3c7;color:#92400e;border-radius:20px;font:600 11px 'DM Sans',sans-serif;">Coming soon</div>
+          </div>
+          <div style="width:32px;height:32px;border-radius:7px;border:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#94a3b8;cursor:pointer;" onClick="{{ closeOdooModal }}">×</div>
+        </div>
+        <p style="font:400 13px 'DM Sans',sans-serif;color:#64748b;line-height:1.6;margin:0;">Connect your Odoo instance to pull product details, client info, and push finished mockups straight into Sales Orders and Invoices.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;opacity:.5;pointer-events:none;">
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;margin-bottom:5px;">Odoo URL</div>
+            <input placeholder="https://yourcompany.odoo.com" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;">
+          </div>
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;margin-bottom:5px;">Database</div>
+            <input placeholder="mycompany-prod" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;">
+          </div>
+          <div>
+            <div style="font:600 11px 'DM Sans',sans-serif;color:#475569;text-transform:uppercase;margin-bottom:5px;">API Key</div>
+            <input type="password" placeholder="••••••••••••" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#f8fafc;">
+          </div>
+        </div>
+        <div style="display:inline-flex;align-items:center;justify-content:center;padding:9px 16px;background:#cbd5e1;color:#fff;border-radius:7px;font:600 13px 'DM Sans',sans-serif;width:100%;">Connect (Coming Soon)</div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;companyName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;PromoWear.ie&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#3498B5&quot;,&quot;options&quot;:[&quot;#3498B5&quot;,&quot;#2563eb&quot;,&quot;#7c3aed&quot;,&quot;#059669&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  canvasRef = React.createRef();
+  mainImgInputRef = React.createRef();
+  logoInputRef = React.createRef();
+  bgImgInputRef = React.createRef();
+  clientLogoInputRef = React.createRef();
+  importInputRef = React.createRef();
+  canvasWrapOuterRef = React.createRef();
+  fabricCanvas = null;
+  history = {};
+  isApplyingHistory = false;
+  perspectiveHandles = [];
+  perspectiveTargetObj = null;
+  perspectivePreviewImg = null;
+  perspectivePreviewDataUrl = null;
+  cropTargetObj = null;
+  cropRect = null;
+  copySnapshots = {};
+  resizeDragStart = null;
+  resizeCanvasToFit = ()=>{
+    const wrap = this.canvasRef.current && this.canvasRef.current.closest('.cb-canvas-wrap');
+    if(!wrap || !this.fabricCanvas) return;
+    const rect = wrap.getBoundingClientRect();
+    const padding = 24;
+    const size = Math.max(180, Math.min(600, rect.width-padding, rect.height-padding));
+    this.applyCanvasSize(size);
+  };
+  applyCanvasSize(size){
+    const scale = size/600;
+    const wrapperEl = this.fabricCanvas && this.fabricCanvas.wrapperEl;
+    if(wrapperEl){
+      wrapperEl.style.transformOrigin = '0 0';
+      wrapperEl.style.transform = 'scale('+scale+')';
+    }
+    if(this.state.canvasDisplaySize !== size) this.setState({canvasDisplaySize:size});
+  }
+  startCanvasResize(e){
+    e.preventDefault();
+    this.resizeDragStart = { x:e.clientX, y:e.clientY, size:this.state.canvasDisplaySize };
+    window.addEventListener('mousemove', this.onCanvasResizeMove);
+    window.addEventListener('mouseup', this.onCanvasResizeEnd);
+  }
+  onCanvasResizeMove = (e)=>{
+    if(!this.resizeDragStart) return;
+    const delta = Math.max(e.clientX-this.resizeDragStart.x, e.clientY-this.resizeDragStart.y);
+    const wrap = this.canvasRef.current && this.canvasRef.current.closest('.cb-canvas-wrap');
+    const rect = wrap ? wrap.getBoundingClientRect() : {width:600,height:600};
+    const maxSize = Math.min(900, rect.width-24, rect.height-24);
+    const size = Math.max(180, Math.min(maxSize, this.resizeDragStart.size+delta));
+    this.applyCanvasSize(size);
+  };
+  onCanvasResizeEnd = ()=>{
+    this.resizeDragStart = null;
+    window.removeEventListener('mousemove', this.onCanvasResizeMove);
+    window.removeEventListener('mouseup', this.onCanvasResizeEnd);
+  };
+  saveTimer = null;
+  db = null;
+
+  uid(){ return 'id-' + Math.random().toString(36).slice(2,9) + Date.now().toString(36); }
+
+  makeItem(index){
+    return {
+      id: this.uid(),
+      label: 'Item '+index,
+      autoLabel: true,
+      mainImageAssetId: null,
+      canvasBgColor: '#ffffff',
+      canvasBgAssetId: null,
+      logoAssetIds: [],
+      canvasJSON: null,
+      details: { productName:'', sku:'', quantity:'', size:'', colour:'', material:'', decorationType:'Embroidery', placement:'', artworkW:'', artworkH:'', threadColour:'', price:'', notes:'', other:'' }
+    };
+  }
+
+  renumberItems(items){
+    return items.map((it,i)=> it.autoLabel ? {...it, label:'Item '+(i+1)} : it);
+  }
+
+  defaultCopyFlags(){ return { logos:false, position:false, size:false, details:false, decoration:false }; }
+
+  state = (() => {
+    const item0 = this.makeItem(1);
+    return {
+      items: [item0],
+      activeItemId: item0.id,
+      copyFlags: this.defaultCopyFlags(),
+      clientInfo: { name:'', company:'', logoAssetId:null },
+      exportSettings: { orientation:'h', perPage:1, quoteNumber:'', date: new Date().toISOString().slice(0,10), extraNotes:'', includeTerms:false, includePageNumbers:true, termsText:'All artwork remains the property of the client. Production adjustments may be made where necessary. Colours shown are approximate; final production colours may vary slightly from on-screen proofs.' },
+      exportModalOpen:false,
+      odooModalOpen:false,
+      saveStatus:'saved',
+      assets:{},
+      selectedObjType:null,
+      perspectiveActive:false,
+      cropActive:false,
+      bgColorPopoverOpen:false,
+      shirtLocked:true,
+      exporting:false,
+      loaded:false,
+      canvasDisplaySize:600,
+      canvasBaseSize:600,
+      zoomLevel:1,
+      leftPanelVisible:true,
+      renderTick:0
+    };
+  })();
+
+  componentDidMount(){
+    window.addEventListener('keydown', this.handleKeyDown);
+    this.waitForLibs().then(()=>this.initDB()).then(()=>this.loadPersistedState()).then(()=>{
+      this.setState({loaded:true}, ()=>this.initCanvas());
+    }).catch(err=>{
+      console.error('init failed', err);
+      this.setState({loaded:true}, ()=>this.initCanvas());
+    });
+  }
+
+  handleKeyDown = (e)=>{
+    const tag = document.activeElement && document.activeElement.tagName;
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+    const key = e.key.toLowerCase();
+    if((e.ctrlKey||e.metaKey) && !e.shiftKey && key==='z'){ e.preventDefault(); this.undo(); }
+    else if((e.ctrlKey||e.metaKey) && (key==='y' || (e.shiftKey && key==='z'))){ e.preventDefault(); this.redo(); }
+    else if((key==='delete' || key==='backspace') && !this.state.perspectiveActive && !this.state.cropActive){ e.preventDefault(); this.deleteSelected(); }
+  };
+
+  waitForLibs(){
+    return new Promise(resolve=>{
+      const check=()=>{ if(window.fabric && window.jspdf && window.JSZip) resolve(); else setTimeout(check,60); };
+      check();
+    });
+  }
+
+  initDB(){
+    return new Promise((resolve,reject)=>{
+      const req = indexedDB.open('promowear_mockup_db', 1);
+      req.onupgradeneeded = (e)=>{
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains('assets')) db.createObjectStore('assets',{keyPath:'id'});
+        if(!db.objectStoreNames.contains('state')) db.createObjectStore('state',{keyPath:'key'});
+      };
+      req.onsuccess = ()=>{ this.db = req.result; resolve(); };
+      req.onerror = ()=>reject(req.error);
+    });
+  }
+
+  idbGet(store,key){
+    return new Promise((resolve,reject)=>{
+      const tx = this.db.transaction(store,'readonly');
+      const req = tx.objectStore(store).get(key);
+      req.onsuccess = ()=>resolve(req.result);
+      req.onerror = ()=>reject(req.error);
+    });
+  }
+  idbPut(store,val){
+    return new Promise((resolve,reject)=>{
+      const tx = this.db.transaction(store,'readwrite');
+      const req = tx.objectStore(store).put(val);
+      req.onsuccess = ()=>resolve();
+      req.onerror = ()=>reject(req.error);
+    });
+  }
+  idbGetAll(store){
+    return new Promise((resolve,reject)=>{
+      const tx = this.db.transaction(store,'readonly');
+      const req = tx.objectStore(store).getAll();
+      req.onsuccess = ()=>resolve(req.result||[]);
+      req.onerror = ()=>reject(req.error);
+    });
+  }
+
+  loadPersistedState(){
+    return this.idbGet('state','current').then(rec=>{
+      if(!rec || !rec.data) return;
+      const data = rec.data;
+      return this.idbGetAll('assets').then(assetRecords=>{
+        const assets = {};
+        assetRecords.forEach(a=>{
+          assets[a.id] = { url: URL.createObjectURL(a.blob), filename:a.filename, mimeType:a.mimeType };
+        });
+        this.setState({
+          items: (data.items && data.items.length) ? data.items : this.state.items,
+          activeItemId: data.activeItemId || (data.items && data.items[0] && data.items[0].id) || this.state.activeItemId,
+          clientInfo: data.clientInfo || this.state.clientInfo,
+          exportSettings: data.exportSettings || this.state.exportSettings,
+          assets
+        });
+      });
+    });
+  }
+
+  persistState(){
+    clearTimeout(this.saveTimer);
+    this.setState({saveStatus:'saving'});
+    this.saveTimer = setTimeout(()=>this.flushSave(), 900);
+  }
+
+  flushSave(){
+    if(!this.db) return;
+    const data = {
+      items: this.state.items,
+      clientInfo: this.state.clientInfo,
+      exportSettings: this.state.exportSettings,
+      activeItemId: this.state.activeItemId
+    };
+    this.idbPut('state', {key:'current', data}).then(()=>{
+      this.setState({saveStatus:'saved'});
+    }).catch(err=>{ console.error('save failed', err); this.setState({saveStatus:'saved'}); });
+  }
+
+  saveDraftNow(){ clearTimeout(this.saveTimer); this.flushSave(); }
+
+  uploadAsset(file){
+    return new Promise((resolve,reject)=>{
+      const id = this.uid();
+      const url = URL.createObjectURL(file);
+      this.idbPut('assets', {id, blob:file, filename:file.name, mimeType:file.type}).then(()=>{
+        this.setState(prev=>({assets:{...prev.assets, [id]:{url, filename:file.name, mimeType:file.type}}}));
+        resolve(id);
+      }).catch(reject);
+    });
+  }
+
+  getActiveItem(){ return this.state.items.find(i=>i.id===this.state.activeItemId); }
+
+  updateActiveItem(updater){
+    this.setState(prev=>{
+      const items = prev.items.map(it=> it.id===prev.activeItemId ? {...it, ...updater(it)} : it);
+      return {items};
+    }, ()=>this.persistState());
+  }
+
+  toggleLeftPanel(){ this.setState(prev=>({leftPanelVisible: !prev.leftPanelVisible}), ()=> setTimeout(()=>this.resizeCanvasToFit(), 260)); }
+
+  zoomIn(){ if(!this.fabricCanvas) return; const z = Math.min(4, this.fabricCanvas.getZoom()*1.2); this.fabricCanvas.setZoom(z); this.setState({zoomLevel:z}); }
+  zoomOut(){ if(!this.fabricCanvas) return; const z = Math.max(0.2, this.fabricCanvas.getZoom()/1.2); this.fabricCanvas.setZoom(z); this.setState({zoomLevel:z}); }
+  zoomReset(){ if(!this.fabricCanvas) return; this.fabricCanvas.setZoom(1); this.setState({zoomLevel:1}); }
+
+  setCanvasBaseSize(e){
+    const n = parseInt(e.target.value, 10);
+    if(!n || !this.fabricCanvas) return;
+    this.fabricCanvas.setWidth(n);
+    this.fabricCanvas.setHeight(n);
+    this.fabricCanvas.requestRenderAll();
+    this.setState({canvasBaseSize:n}, ()=>this.resizeCanvasToFit());
+  }
+
+  getSelectedObj(){ return this.fabricCanvas && this.fabricCanvas.getActiveObject(); }
+
+  setSelectedWidth(e){
+    const obj = this.getSelectedObj();
+    const w = parseFloat(e.target.value);
+    if(!obj || !w || !obj.width) return;
+    obj.set({scaleX: w/obj.width});
+    obj.setCoords();
+    this.fabricCanvas.requestRenderAll();
+    this.syncCanvasJSON();
+    this.setState(prev=>({renderTick:(prev.renderTick||0)+1}));
+  }
+
+  setSelectedHeight(e){
+    const obj = this.getSelectedObj();
+    const h = parseFloat(e.target.value);
+    if(!obj || !h || !obj.height) return;
+    obj.set({scaleY: h/obj.height});
+    obj.setCoords();
+    this.fabricCanvas.requestRenderAll();
+    this.syncCanvasJSON();
+    this.setState(prev=>({renderTick:(prev.renderTick||0)+1}));
+  }
+
+  handleMainImageChange(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    this.uploadAsset(file).then(assetId=>{
+      this.updateActiveItem(()=>({ mainImageAssetId: assetId, canvasJSON:null }));
+      this.rebuildCanvasForActiveItem();
+    });
+    e.target.value='';
+  }
+
+  handleLogoChange(e){
+    const files = Array.from(e.target.files||[]);
+    if(!files.length) return;
+    Promise.all(files.map(f=>this.uploadAsset(f))).then(ids=>{
+      this.updateActiveItem(it=>({ logoAssetIds:[...it.logoAssetIds, ...ids] }));
+      ids.forEach(id=>this.addLogoToCanvas(id));
+    });
+    e.target.value='';
+  }
+
+  handleBgImageChange(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    this.uploadAsset(file).then(assetId=>{
+      this.updateActiveItem(()=>({ canvasBgAssetId: assetId }));
+      const url = this.state.assets[assetId] ? this.state.assets[assetId].url : URL.createObjectURL(file);
+      window.fabric.Image.fromURL(url, (img)=>{
+        img.set({originX:'left', originY:'top'});
+        img.scaleToWidth(this.fabricCanvas.getWidth());
+        this.fabricCanvas.setBackgroundImage(img, ()=>this.fabricCanvas.renderAll());
+      });
+    });
+    e.target.value='';
+  }
+
+  removeBgImage(){
+    this.updateActiveItem(()=>({ canvasBgAssetId:null }));
+    if(this.fabricCanvas){
+      this.fabricCanvas.setBackgroundImage(null, ()=>{
+        this.fabricCanvas.setBackgroundColor(this.getActiveItem().canvasBgColor||'#ffffff', ()=>this.fabricCanvas.renderAll());
+      });
+    }
+  }
+
+  handleClientLogoChange(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    this.uploadAsset(file).then(id=>{
+      this.setState(prev=>({clientInfo:{...prev.clientInfo, logoAssetId:id}}));
+      this.persistState();
+    });
+    e.target.value='';
+  }
+
+  initCanvas(){
+    if(!window.fabric || !this.canvasRef.current) return;
+    this.fabricCanvas = new window.fabric.Canvas(this.canvasRef.current, { preserveObjectStacking:true });
+    this.fabricCanvas.on('selection:created', ()=>this.onSelectionChange());
+    this.fabricCanvas.on('selection:updated', ()=>this.onSelectionChange());
+    this.fabricCanvas.on('selection:cleared', ()=>{ if(!this.state.perspectiveActive && !this.state.cropActive) this.setState({selectedObjType:null}); });
+    this.fabricCanvas.on('object:modified', ()=>this.syncCanvasJSON());
+    this.fabricCanvas.on('object:moving', (e)=>this.onPerspectiveHandleMove(e));
+    this.fabricCanvas.on('mouse:wheel', (opt)=>{
+      const e = opt.e;
+      if(!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault(); e.stopPropagation();
+      let zoom = this.fabricCanvas.getZoom();
+      zoom *= 0.999 ** (e.deltaY);
+      zoom = Math.max(0.2, Math.min(4, zoom));
+      this.fabricCanvas.setZoom(zoom);
+      this.setState({zoomLevel:zoom});
+    });
+    this.rebuildCanvasForActiveItem();
+    this.resizeCanvasToFit();
+    const wrapEl = this.canvasRef.current && this.canvasRef.current.closest('.cb-canvas-wrap');
+    if(window.ResizeObserver && wrapEl){
+      this.resizeObserver = new ResizeObserver(()=>this.resizeCanvasToFit());
+      this.resizeObserver.observe(wrapEl);
+    } else {
+      window.addEventListener('resize', this.resizeCanvasToFit);
+    }
+  }
+
+  componentWillUnmount(){
+    if(this.resizeObserver) this.resizeObserver.disconnect();
+    window.removeEventListener('resize', this.resizeCanvasToFit);
+    window.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  onSelectionChange(){
+    const obj = this.fabricCanvas.getActiveObject();
+    if(!obj || obj.isPerspectiveHandle || obj.isCropRect) return;
+    if(this.state.perspectiveActive && obj !== this.perspectiveTargetObj) this.cancelPerspective();
+    if(this.state.cropActive && obj !== this.cropTargetObj) this.cancelCrop();
+    this.setState({ selectedObjType: obj.customType || null, renderTick:(this.state.renderTick||0)+1 });
+  }
+
+  rebuildCanvasForActiveItem(){
+    const canvas = this.fabricCanvas;
+    if(!canvas) return;
+    const item = this.getActiveItem();
+    if(!item) return;
+    canvas.clear();
+    canvas.setBackgroundColor(item.canvasBgColor||'#ffffff', ()=>canvas.renderAll());
+    this.setState({selectedObjType:null});
+    const accent = this.props.accentColor || '#3498B5';
+
+    if(item.canvasJSON){
+      canvas.loadFromJSON(item.canvasJSON, ()=>canvas.renderAll());
+      return;
+    }
+    const base = this.state.canvasBaseSize || 600;
+    const center = base/2;
+    const addLogos = ()=>{
+      (item.logoAssetIds||[]).forEach((logoId, idx)=>{
+        const asset = this.state.assets[logoId];
+        if(!asset) return;
+        window.fabric.Image.fromURL(asset.url, (img)=>{
+          const targetSize = base*0.27;
+          const scale = Math.min(targetSize/img.width, targetSize/img.height, 1);
+          img.set({ left:center, top: center-base*0.08+idx*14, originX:'center', originY:'center', scaleX:scale, scaleY:scale, customType:'logo', logoAssetId:logoId, cornerColor:accent, cornerStyle:'circle', transparentCorners:false, borderColor:accent });
+          canvas.add(img);
+          this.syncCanvasJSON();
+        });
+      });
+    };
+    if(item.mainImageAssetId && this.state.assets[item.mainImageAssetId]){
+      window.fabric.Image.fromURL(this.state.assets[item.mainImageAssetId].url, (img)=>{
+        const scale = Math.min(base*0.8/img.width, base*0.9/img.height);
+        img._origWidth = img.width; img._origHeight = img.height;
+        img.set({ left:center, top:center, originX:'center', originY:'center', scaleX:scale, scaleY:scale, selectable:!this.state.shirtLocked, evented:!this.state.shirtLocked, hasControls:!this.state.shirtLocked, customType:'garment' });
+        canvas.add(img);
+        canvas.sendToBack(img);
+        addLogos();
+      });
+    } else {
+      addLogos();
+    }
+  }
+
+  syncCanvasJSON(){
+    if(!this.fabricCanvas) return;
+    const json = JSON.stringify(this.fabricCanvas.toJSON(['customType','logoAssetId']));
+    this.pushHistory(this.state.activeItemId, json);
+    this.setState(prev=>({ items: prev.items.map(it=> it.id===prev.activeItemId ? {...it, canvasJSON:json} : it) }), ()=>this.persistState());
+  }
+
+  pushHistory(itemId, json){
+    if(this.isApplyingHistory || !itemId) return;
+    if(!this.history[itemId]) this.history[itemId] = {stack:[], index:-1};
+    const h = this.history[itemId];
+    if(h.stack[h.index]===json) return;
+    h.stack = h.stack.slice(0, h.index+1);
+    h.stack.push(json);
+    h.index = h.stack.length-1;
+  }
+
+  undo(){
+    const itemId = this.state.activeItemId;
+    const h = this.history[itemId];
+    if(!h || h.index<=0 || !this.fabricCanvas) return;
+    h.index--;
+    this.isApplyingHistory = true;
+    const json = h.stack[h.index];
+    this.fabricCanvas.loadFromJSON(json, ()=>{
+      this.fabricCanvas.renderAll();
+      this.isApplyingHistory = false;
+      this.setState(prev=>({items: prev.items.map(it=>it.id===itemId?{...it, canvasJSON:json}:it), selectedObjType:null}), ()=>this.persistState());
+    });
+  }
+
+  redo(){
+    const itemId = this.state.activeItemId;
+    const h = this.history[itemId];
+    if(!h || h.index>=h.stack.length-1 || !this.fabricCanvas) return;
+    h.index++;
+    this.isApplyingHistory = true;
+    const json = h.stack[h.index];
+    this.fabricCanvas.loadFromJSON(json, ()=>{
+      this.fabricCanvas.renderAll();
+      this.isApplyingHistory = false;
+      this.setState(prev=>({items: prev.items.map(it=>it.id===itemId?{...it, canvasJSON:json}:it), selectedObjType:null}), ()=>this.persistState());
+    });
+  }
+
+  addLogoToCanvas(logoId){
+    const canvas = this.fabricCanvas;
+    const asset = this.state.assets[logoId];
+    if(!canvas || !asset) return;
+    const accent = this.props.accentColor || '#3498B5';
+    const base = this.state.canvasBaseSize || 600;
+    const center = base/2;
+    window.fabric.Image.fromURL(asset.url, (img)=>{
+      const targetSize = base*0.27;
+      const scale = Math.min(targetSize/img.width, targetSize/img.height, 1);
+      img.set({ left:center, top:center, originX:'center', originY:'center', scaleX:scale, scaleY:scale, customType:'logo', logoAssetId:logoId, cornerColor:accent, cornerStyle:'circle', transparentCorners:false, borderColor:accent });
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.requestRenderAll();
+      this.syncCanvasJSON();
+    });
+  }
+
+  removeLogoChip(logoId){
+    const canvas = this.fabricCanvas;
+    if(canvas){
+      const obj = canvas.getObjects().find(o=>o.logoAssetId===logoId);
+      if(obj){ canvas.remove(obj); canvas.requestRenderAll(); }
+    }
+    this.updateActiveItem(it=>({ logoAssetIds: it.logoAssetIds.filter(id=>id!==logoId) }));
+    this.syncCanvasJSON();
+  }
+
+  rotateSelected(){
+    const obj = this.fabricCanvas && this.fabricCanvas.getActiveObject();
+    if(!obj) return;
+    obj.rotate(((obj.angle||0)+90)%360);
+    this.fabricCanvas.requestRenderAll();
+    this.syncCanvasJSON();
+  }
+
+  resetTransformSelected(){
+    const obj = this.fabricCanvas && this.fabricCanvas.getActiveObject();
+    if(!obj) return;
+    const scale = obj._origWidth ? Math.min(160/obj._origWidth,160/obj._origHeight,1) : obj.scaleX;
+    obj.set({angle:0, skewX:0, skewY:0, scaleX:scale, scaleY:scale});
+    this.fabricCanvas.requestRenderAll();
+    this.syncCanvasJSON();
+  }
+
+  deleteSelected(){
+    const obj = this.fabricCanvas && this.fabricCanvas.getActiveObject();
+    if(!obj) return;
+    const logoAssetId = obj.logoAssetId;
+    this.fabricCanvas.remove(obj);
+    this.fabricCanvas.discardActiveObject();
+    this.fabricCanvas.requestRenderAll();
+    if(logoAssetId){
+      this.updateActiveItem(it=>({ logoAssetIds: it.logoAssetIds.filter(id=>id!==logoAssetId) }));
+    }
+    this.setState({selectedObjType:null});
+    this.syncCanvasJSON();
+  }
+
+  startPerspective(){
+    const obj = this.fabricCanvas && this.fabricCanvas.getActiveObject();
+    if(!obj || obj.customType!=='logo') return;
+    if(this.state.cropActive) this.cancelCrop();
+    obj.setCoords();
+    const c = obj.aCoords;
+    const accent = this.props.accentColor || '#3498B5';
+    const makeHandle = (pt)=>{
+      const h = new window.fabric.Circle({ left:pt.x, top:pt.y, originX:'center', originY:'center', radius:7, fill:accent, stroke:'#fff', strokeWidth:2, hasControls:false, hasBorders:false, selectable:true, evented:true });
+      h.isPerspectiveHandle = true;
+      return h;
+    };
+    this.perspectiveTargetObj = obj;
+    this.perspectiveHandles = [makeHandle(c.tl), makeHandle(c.tr), makeHandle(c.br), makeHandle(c.bl)];
+    this._perspSrcCanvas = document.createElement('canvas');
+    this._perspSrcCanvas.width = obj.width; this._perspSrcCanvas.height = obj.height;
+    this._perspSrcCanvas.getContext('2d').drawImage(obj.getElement(), 0,0, obj.width, obj.height);
+    obj.visible = false; obj.selectable = false; obj.evented = false;
+    this.fabricCanvas.discardActiveObject();
+    this.perspectiveHandles.forEach(h=>this.fabricCanvas.add(h));
+    this.updatePerspectivePreview();
+    this.setState({selectedObjType:'logo', perspectiveActive:true});
+  }
+
+  updatePerspectivePreview(){
+    const obj = this.perspectiveTargetObj;
+    if(!obj || !this._perspSrcCanvas) return;
+    const destPts = this.perspectiveHandles.map(h=>({x:h.left,y:h.top}));
+    const xs = destPts.map(p=>p.x), ys = destPts.map(p=>p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    const boxW = Math.max(4, Math.round(maxX-minX)), boxH = Math.max(4, Math.round(maxY-minY));
+    const srcW = obj.width, srcH = obj.height;
+    const src = [{x:0,y:0},{x:srcW,y:0},{x:srcW,y:srcH},{x:0,y:srcH}];
+    const dstLocal = destPts.map(p=>({x:p.x-minX, y:p.y-minY}));
+    const H = this.computeHomography(src, dstLocal);
+    const Hinv = this.invert3x3(H);
+    const tmp = document.createElement('canvas'); tmp.width=boxW; tmp.height=boxH;
+    this.warpCanvasNearest(this._perspSrcCanvas, tmp, Hinv);
+    this.perspectivePreviewDataUrl = tmp.toDataURL('image/png');
+    const seq = (this._perspSeq = (this._perspSeq||0)+1);
+    window.fabric.Image.fromURL(this.perspectivePreviewDataUrl, (img)=>{
+      if(seq !== this._perspSeq || !this.perspectiveTargetObj) return;
+      img.set({left:minX, top:minY, originX:'left', originY:'top', selectable:false, evented:false});
+      if(this.perspectivePreviewImg) this.fabricCanvas.remove(this.perspectivePreviewImg);
+      this.perspectivePreviewImg = img;
+      this.fabricCanvas.add(img);
+      this.perspectiveHandles.forEach(h=>this.fabricCanvas.bringToFront(h));
+      this.fabricCanvas.requestRenderAll();
+    });
+  }
+
+  cancelPerspective(){
+    const canvas = this.fabricCanvas;
+    if(!canvas) return;
+    if(this.perspectivePreviewImg) canvas.remove(this.perspectivePreviewImg);
+    (this.perspectiveHandles||[]).forEach(h=>canvas.remove(h));
+    this.perspectiveHandles = []; this.perspectivePreviewImg=null; this.perspectivePreviewDataUrl=null; this._perspSrcCanvas=null;
+    if(this.perspectiveTargetObj){
+      this.perspectiveTargetObj.visible = true;
+      this.perspectiveTargetObj.selectable = true;
+      this.perspectiveTargetObj.evented = true;
+      canvas.setActiveObject(this.perspectiveTargetObj);
+    }
+    this.perspectiveTargetObj=null;
+    this.setState({perspectiveActive:false});
+    canvas.requestRenderAll();
+  }
+
+  onPerspectiveHandleMove(e){
+    if(!e || !e.target || !e.target.isPerspectiveHandle) return;
+    this.updatePerspectivePreview();
+    this.fabricCanvas.requestRenderAll();
+  }
+
+  computeHomography(src, dst){
+    const A = []; const bVec = [];
+    for(let i=0;i<4;i++){
+      const x=src[i].x, y=src[i].y, X=dst[i].x, Y=dst[i].y;
+      A.push([x,y,1,0,0,0,-x*X,-y*X]); bVec.push(X);
+      A.push([0,0,0,x,y,1,-x*Y,-y*Y]); bVec.push(Y);
+    }
+    const h = this.solveLinear(A, bVec);
+    return [h[0],h[1],h[2],h[3],h[4],h[5],h[6],h[7],1];
+  }
+
+  solveLinear(A, b){
+    const n = A.length;
+    const M = A.map((row,i)=>[...row, b[i]]);
+    for(let col=0; col<n; col++){
+      let pivotRow = col;
+      for(let r=col+1;r<n;r++){ if(Math.abs(M[r][col])>Math.abs(M[pivotRow][col])) pivotRow=r; }
+      const tmp = M[col]; M[col]=M[pivotRow]; M[pivotRow]=tmp;
+      const pivot = M[col][col] || 1e-9;
+      for(let c=col;c<=n;c++) M[col][c] /= pivot;
+      for(let r=0;r<n;r++){
+        if(r===col) continue;
+        const factor = M[r][col];
+        for(let c=col;c<=n;c++) M[r][c] -= factor*M[col][c];
+      }
+    }
+    return M.map(row=>row[n]);
+  }
+
+  invert3x3(m){
+    const a=m[0],b=m[1],c=m[2],d=m[3],e=m[4],f=m[5],g=m[6],h=m[7],i=m[8];
+    const A = e*i-f*h, B = -(d*i-f*g), C = d*h-e*g;
+    const D = -(b*i-c*h), E = a*i-c*g, F = -(a*h-b*g);
+    const G = b*f-c*e, H2 = -(a*f-c*d), I = a*e-b*d;
+    const det = a*A + b*B + c*C;
+    if(Math.abs(det)<1e-12) return [1,0,0,0,1,0,0,0,1];
+    const invDet = 1/det;
+    return [A*invDet,D*invDet,G*invDet, B*invDet,E*invDet,H2*invDet, C*invDet,F*invDet,I*invDet];
+  }
+
+  warpCanvasNearest(srcCanvas, destCanvas, Hinv){
+    const sctx = srcCanvas.getContext('2d');
+    const sw = srcCanvas.width, sh = srcCanvas.height;
+    const srcData = sctx.getImageData(0,0,sw,sh).data;
+    const dw = destCanvas.width, dh = destCanvas.height;
+    const dctx = destCanvas.getContext('2d');
+    const destImgData = dctx.createImageData(dw, dh);
+    const dd = destImgData.data;
+    const a=Hinv[0],b=Hinv[1],c=Hinv[2],d=Hinv[3],e=Hinv[4],f=Hinv[5],g=Hinv[6],h=Hinv[7],i=Hinv[8];
+    for(let y=0;y<dh;y++){
+      for(let x=0;x<dw;x++){
+        const wgt = g*x+h*y+i;
+        const sx = Math.round((a*x+b*y+c)/wgt);
+        const sy = Math.round((d*x+e*y+f)/wgt);
+        const di = (y*dw+x)*4;
+        if(sx>=0 && sx<sw && sy>=0 && sy<sh){
+          const si = (sy*sw+sx)*4;
+          dd[di]=srcData[si]; dd[di+1]=srcData[si+1]; dd[di+2]=srcData[si+2]; dd[di+3]=srcData[si+3];
+        }
+      }
+    }
+    dctx.putImageData(destImgData,0,0);
+  }
+
+  applyPerspective(){
+    const canvas = this.fabricCanvas;
+    const obj = this.perspectiveTargetObj;
+    if(!obj || !canvas || !this.perspectivePreviewImg){ this.cancelPerspective(); return; }
+    const left = this.perspectivePreviewImg.left, top = this.perspectivePreviewImg.top;
+    const dataUrl = this.perspectivePreviewDataUrl;
+    const accent = this.props.accentColor || '#3498B5';
+    const logoAssetId = obj.logoAssetId;
+    const idx = canvas.getObjects().indexOf(obj);
+    window.fabric.Image.fromURL(dataUrl, (newImg)=>{
+      newImg.set({ left, top, originX:'left', originY:'top', angle:0, scaleX:1, scaleY:1, customType:'logo', logoAssetId, cornerColor:accent, cornerStyle:'circle', transparentCorners:false, borderColor:accent });
+      canvas.remove(obj);
+      if(this.perspectivePreviewImg) canvas.remove(this.perspectivePreviewImg);
+      this.perspectiveHandles.forEach(h=>canvas.remove(h));
+      this.perspectiveHandles=[]; this.perspectivePreviewImg=null; this.perspectivePreviewDataUrl=null; this._perspSrcCanvas=null; this.perspectiveTargetObj=null;
+      canvas.insertAt(newImg, Math.max(0, idx));
+      canvas.setActiveObject(newImg);
+      this.setState({perspectiveActive:false, selectedObjType:'logo'});
+      canvas.requestRenderAll();
+      this.syncCanvasJSON();
+    });
+  }
+
+  startCrop(){
+    const obj = this.fabricCanvas && this.fabricCanvas.getActiveObject();
+    if(!obj || obj.customType!=='logo') return;
+    if(this.state.perspectiveActive) this.cancelPerspective();
+    obj.setCoords();
+    const b = obj.getBoundingRect(true, true);
+    const accent = this.props.accentColor || '#3498B5';
+    this.cropTargetObj = obj;
+    this.cropRect = new window.fabric.Rect({ left:b.left, top:b.top, width:b.width, height:b.height, fill:'rgba(52,152,181,0.15)', stroke:accent, strokeWidth:1.5, cornerColor:accent, cornerStyle:'circle', transparentCorners:false, borderColor:accent, lockRotation:true, hasRotatingPoint:false });
+    this.cropRect.isCropRect = true;
+    obj.selectable=false; obj.evented=false;
+    this.fabricCanvas.discardActiveObject();
+    this.fabricCanvas.add(this.cropRect);
+    this.fabricCanvas.setActiveObject(this.cropRect);
+    this.fabricCanvas.requestRenderAll();
+    this.setState({selectedObjType:'logo', cropActive:true});
+  }
+
+  applyCrop(){
+    const canvas = this.fabricCanvas;
+    const obj = this.cropTargetObj, rect = this.cropRect;
+    if(!obj || !rect){ this.cancelCrop(); return; }
+    rect.setCoords();
+    const objBox = obj.getBoundingRect(true,true);
+    const rectBox = rect.getBoundingRect(true,true);
+    const relX = (rectBox.left-objBox.left)/objBox.width;
+    const relY = (rectBox.top-objBox.top)/objBox.height;
+    const relW = rectBox.width/objBox.width;
+    const relH = rectBox.height/objBox.height;
+    const srcW = obj.width, srcH = obj.height;
+    const cropX = Math.max(0, Math.min(srcW-2, Math.round(relX*srcW)));
+    const cropY = Math.max(0, Math.min(srcH-2, Math.round(relY*srcH)));
+    const cropW = Math.max(2, Math.min(srcW-cropX, Math.round(relW*srcW)));
+    const cropH = Math.max(2, Math.min(srcH-cropY, Math.round(relH*srcH)));
+    const off = document.createElement('canvas'); off.width=srcW; off.height=srcH;
+    off.getContext('2d').drawImage(obj.getElement(),0,0,srcW,srcH);
+    const cropCanvas = document.createElement('canvas'); cropCanvas.width=cropW; cropCanvas.height=cropH;
+    cropCanvas.getContext('2d').drawImage(off, cropX, cropY, cropW, cropH, 0,0, cropW, cropH);
+    const dataUrl = cropCanvas.toDataURL('image/png');
+    const accent = this.props.accentColor || '#3498B5';
+    const logoAssetId = obj.logoAssetId;
+    const idx = canvas.getObjects().indexOf(obj);
+    window.fabric.Image.fromURL(dataUrl, (newImg)=>{
+      newImg.set({ left:rectBox.left, top:rectBox.top, originX:'left', originY:'top', angle:0, scaleX:1, scaleY:1, customType:'logo', logoAssetId, cornerColor:accent, cornerStyle:'circle', transparentCorners:false, borderColor:accent });
+      canvas.remove(obj);
+      canvas.remove(rect);
+      this.cropTargetObj=null; this.cropRect=null;
+      canvas.insertAt(newImg, Math.max(0, idx));
+      canvas.setActiveObject(newImg);
+      this.setState({cropActive:false, selectedObjType:'logo'});
+      canvas.requestRenderAll();
+      this.syncCanvasJSON();
+    });
+  }
+
+  cancelCrop(){
+    const canvas = this.fabricCanvas;
+    if(!canvas) return;
+    if(this.cropRect) canvas.remove(this.cropRect);
+    this.cropRect=null;
+    if(this.cropTargetObj){ this.cropTargetObj.selectable=true; this.cropTargetObj.evented=true; canvas.setActiveObject(this.cropTargetObj); }
+    this.cropTargetObj=null;
+    this.setState({cropActive:false});
+    canvas.requestRenderAll();
+  }
+
+  removeBgSelected(){
+    const obj = this.fabricCanvas && this.fabricCanvas.getActiveObject();
+    if(!obj) return;
+    const imgEl = obj.getElement();
+    const w = obj.width || imgEl.naturalWidth||imgEl.width, h = obj.height || imgEl.naturalHeight||imgEl.height;
+    const off = document.createElement('canvas'); off.width=w; off.height=h;
+    const ctx = off.getContext('2d'); ctx.drawImage(imgEl,0,0,w,h);
+    let imgData;
+    try{ imgData = ctx.getImageData(0,0,w,h); }catch(err){ console.error('BG removal failed', err); return; }
+    const d = imgData.data;
+    const corners = [[0,0],[w-1,0],[0,h-1],[w-1,h-1]];
+    let sr=0,sg=0,sb=0;
+    corners.forEach(([cx,cy])=>{ const i=(cy*w+cx)*4; sr+=d[i]; sg+=d[i+1]; sb+=d[i+2]; });
+    const br=sr/4, bg=sg/4, bb=sb/4;
+    const threshold = 38;
+    for(let i=0;i<d.length;i+=4){
+      const dr=d[i]-br, dg=d[i+1]-bg, db=d[i+2]-bb;
+      const dist = Math.sqrt(dr*dr+dg*dg+db*db);
+      if(dist < threshold) d[i+3]=0;
+    }
+    ctx.putImageData(imgData,0,0);
+    const dataUrl = off.toDataURL('image/png');
+    const accent = this.props.accentColor || '#3498B5';
+    const isGarment = obj.customType==='garment';
+    window.fabric.Image.fromURL(dataUrl, (newImg)=>{
+      newImg.set({ left:obj.left, top:obj.top, originX:'center', originY:'center', scaleX:obj.scaleX, scaleY:obj.scaleY, angle:obj.angle, skewX:obj.skewX||0, skewY:obj.skewY||0, customType:obj.customType, logoAssetId:obj.logoAssetId, cornerColor:accent, cornerStyle:'circle', transparentCorners:false, borderColor:accent, selectable:obj.selectable, hasControls:obj.hasControls, evented:obj.evented });
+      this.fabricCanvas.remove(obj);
+      this.fabricCanvas.add(newImg);
+      if(isGarment) this.fabricCanvas.sendToBack(newImg);
+      this.fabricCanvas.setActiveObject(newImg);
+      this.fabricCanvas.requestRenderAll();
+      this.syncCanvasJSON();
+    });
+  }
+
+  toggleShirtLock(){
+    this.setState(prev=>{
+      const locked = !prev.shirtLocked;
+      const canvas = this.fabricCanvas;
+      if(canvas){
+        const garment = canvas.getObjects().find(o=>o.customType==='garment');
+        if(garment){ garment.set({selectable:!locked, evented:!locked, hasControls:!locked}); canvas.requestRenderAll(); }
+      }
+      return {shirtLocked:locked};
+    });
+  }
+
+  setCanvasBgColor(color){
+    this.updateActiveItem(()=>({canvasBgColor:color}));
+    if(this.fabricCanvas){ this.fabricCanvas.setBackgroundColor(color, ()=>this.fabricCanvas.renderAll()); }
+    this.setState({bgColorPopoverOpen:false});
+  }
+
+  addItem(){
+    if(this.state.perspectiveActive) this.cancelPerspective();
+    if(this.state.cropActive) this.cancelCrop();
+    const newItem = this.makeItem(this.state.items.length+1);
+    this.setState(prev=>{
+      const items = this.renumberItems([...prev.items, newItem]);
+      return {items, activeItemId:newItem.id, copyFlags:this.defaultCopyFlags()};
+    }, ()=>{
+      this.rebuildCanvasForActiveItem();
+      this.persistState();
+    });
+  }
+
+  switchItem(id){
+    if(id===this.state.activeItemId) return;
+    if(this.state.perspectiveActive) this.cancelPerspective();
+    if(this.state.cropActive) this.cancelCrop();
+    this.setState({activeItemId:id, selectedObjType:null, copyFlags:this.defaultCopyFlags()}, ()=>this.rebuildCanvasForActiveItem());
+  }
+
+  removeItem(id){
+    if(this.state.perspectiveActive) this.cancelPerspective();
+    if(this.state.cropActive) this.cancelCrop();
+    this.setState(prev=>{
+      if(prev.items.length<=1) return null;
+      const items = this.renumberItems(prev.items.filter(i=>i.id!==id));
+      const activeItemId = prev.activeItemId===id ? items[0].id : prev.activeItemId;
+      return {items, activeItemId};
+    }, ()=>{ this.rebuildCanvasForActiveItem(); this.persistState(); });
+  }
+
+  updateItemLabel(id, label){
+    this.setState(prev=>({items: prev.items.map(it=>it.id===id?{...it,label,autoLabel:false}:it)}));
+    this.persistState();
+  }
+
+  getFirstItem(){ return this.state.items[0]; }
+
+  toggleCopyFlag(flag){
+    const flagsNow = this.state.copyFlags;
+    const turningOn = !flagsNow[flag];
+    const itemId = this.state.activeItemId;
+    if(!this.copySnapshots[itemId]) this.copySnapshots[itemId] = {};
+    if(turningOn){
+      if(flag==='details'){ this.copySnapshots[itemId].details = {...this.getActiveItem().details}; }
+      else if(flag==='decoration'){
+        const dd = this.getActiveItem().details;
+        this.copySnapshots[itemId].decoration = { decorationType:dd.decorationType, placement:dd.placement, artworkW:dd.artworkW, artworkH:dd.artworkH, threadColour:dd.threadColour };
+      } else if(flag==='logos'||flag==='position'||flag==='size'){
+        if(!this.copySnapshots[itemId].logos){
+          const it = this.getActiveItem();
+          this.copySnapshots[itemId].logos = { logoAssetIds:[...it.logoAssetIds], canvasJSON: it.canvasJSON };
+        }
+      }
+    }
+    this.setState(prev=>{
+      const flags = {...prev.copyFlags};
+      flags[flag] = turningOn;
+      return {copyFlags:flags};
+    }, ()=>{
+      if(turningOn){
+        if(flag==='details') this.applyCopyDetails();
+        if(flag==='decoration') this.applyCopyDecoration();
+        if(flag==='logos'||flag==='position'||flag==='size') this.applyCopyLogos();
+      } else {
+        if(flag==='details') this.restoreSnapshot('details');
+        if(flag==='decoration') this.restoreSnapshot('decoration');
+        if(flag==='logos'||flag==='position'||flag==='size'){
+          const flags2 = this.state.copyFlags;
+          if(!flags2.logos && !flags2.position && !flags2.size) this.restoreSnapshot('logos');
+        }
+      }
+    });
+  }
+
+  restoreSnapshot(category){
+    const itemId = this.state.activeItemId;
+    const snap = this.copySnapshots[itemId] && this.copySnapshots[itemId][category];
+    if(!snap) return;
+    if(category==='details'){
+      this.updateActiveItem(()=>({ details:{...snap} }));
+    } else if(category==='decoration'){
+      this.updateActiveItem(it=>({ details:{...it.details, ...snap} }));
+    } else if(category==='logos'){
+      this.updateActiveItem(()=>({ logoAssetIds:[...snap.logoAssetIds] }));
+      const canvas = this.fabricCanvas;
+      if(!canvas) return;
+      canvas.getObjects().filter(o=>o.customType==='logo').forEach(o=>canvas.remove(o));
+      if(snap.canvasJSON){
+        let d; try{ d = JSON.parse(snap.canvasJSON); }catch(e){ d=null; }
+        if(d && d.objects){
+          const logoDefs = d.objects.filter(o=>o.customType==='logo');
+          if(logoDefs.length){
+            window.fabric.util.enlivenObjects(logoDefs, (objs)=>{
+              const accent = this.props.accentColor||'#3498B5';
+              objs.forEach(o=>{ o.set({cornerColor:accent,cornerStyle:'circle',transparentCorners:false,borderColor:accent}); canvas.add(o); });
+              canvas.requestRenderAll();
+              this.syncCanvasJSON();
+            });
+            return;
+          }
+        }
+      }
+      snap.logoAssetIds.forEach(id=>this.addLogoToCanvas(id));
+    }
+  }
+
+  applyCopyDetails(){
+    const source = this.getFirstItem();
+    const current = this.getActiveItem();
+    if(!source||!current||source.id===current.id) return;
+    this.updateActiveItem(()=>({ details: {...source.details} }));
+  }
+
+  applyCopyDecoration(){
+    const source = this.getFirstItem();
+    const current = this.getActiveItem();
+    if(!source||!current||source.id===current.id) return;
+    this.updateActiveItem(it=>({ details:{...it.details, decorationType:source.details.decorationType, placement:source.details.placement, artworkW:source.details.artworkW, artworkH:source.details.artworkH, threadColour:source.details.threadColour} }));
+  }
+
+  applyCopyLogos(){
+    const source = this.getFirstItem();
+    const current = this.getActiveItem();
+    if(!source||!current||source.id===current.id) return;
+    this.updateActiveItem(()=>({ logoAssetIds:[...source.logoAssetIds] }));
+    const canvas = this.fabricCanvas;
+    if(!canvas) return;
+    canvas.getObjects().filter(o=>o.customType==='logo').forEach(o=>canvas.remove(o));
+    if(source.canvasJSON){
+      let srcData;
+      try{ srcData = JSON.parse(source.canvasJSON); }catch(e){ srcData=null; }
+      if(srcData && srcData.objects){
+        const logoDefs = srcData.objects.filter(o=>o.customType==='logo');
+        if(logoDefs.length){
+          window.fabric.util.enlivenObjects(logoDefs, (objs)=>{
+            const accent = this.props.accentColor || '#3498B5';
+            objs.forEach(o=>{ o.set({cornerColor:accent, cornerStyle:'circle', transparentCorners:false, borderColor:accent}); canvas.add(o); });
+            canvas.requestRenderAll();
+            this.syncCanvasJSON();
+          });
+          return;
+        }
+      }
+    }
+    source.logoAssetIds.forEach(id=>this.addLogoToCanvas(id));
+  }
+
+  updateDetail(key,value){ this.updateActiveItem(it=>({ details:{...it.details, [key]:value} })); }
+  updateClientInfo(key,value){ this.setState(prev=>({clientInfo:{...prev.clientInfo,[key]:value}})); this.persistState(); }
+  updateExportSetting(key,value){ this.setState(prev=>({exportSettings:{...prev.exportSettings,[key]:value}})); this.persistState(); }
+
+  openExportModal(){ this.setState({exportModalOpen:true, odooModalOpen:false}); }
+  closeExportModal(){ this.setState({exportModalOpen:false}); }
+
+  loadImageAsDataURL(url){
+    return fetch(url).then(r=>r.blob()).then(blob=>new Promise((resolve,reject)=>{
+      const objUrl = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload=()=>{
+        const c=document.createElement('canvas'); c.width=img.naturalWidth; c.height=img.naturalHeight;
+        c.getContext('2d').drawImage(img,0,0);
+        URL.revokeObjectURL(objUrl);
+        resolve({url:c.toDataURL('image/png'), w:img.naturalWidth, h:img.naturalHeight});
+      };
+      img.onerror=(e)=>{ URL.revokeObjectURL(objUrl); reject(e); };
+      img.src=objUrl;
+    })).catch(err=>{
+      console.warn('logo fetch-blob failed, falling back to direct load', err);
+      return new Promise((resolve,reject)=>{
+        const img = new Image();
+        img.onload=()=>{
+          try{
+            const c=document.createElement('canvas'); c.width=img.naturalWidth||img.width; c.height=img.naturalHeight||img.height;
+            c.getContext('2d').drawImage(img,0,0);
+            resolve({url:c.toDataURL('image/png'), w:c.width, h:c.height});
+          }catch(e2){ reject(e2); }
+        };
+        img.onerror=(e2)=>reject(e2);
+        img.src=url;
+      });
+    });
+  }
+
+  drawItemCard(doc, item, imgDataUrl, x, y, w, h, orientation){
+    const pad = 10;
+    const d = item.details || {};
+    const titleSize = Math.max(11, Math.min(15, w/18));
+    const bodySize = 14;
+    const lineH = bodySize + 4;
+    let imgArea, textArea;
+    if(orientation==='h'){
+      const imgSize = Math.min(w*0.42, h-2*pad);
+      imgArea = {x:x+pad, y:y+pad, w:imgSize, h:h-2*pad};
+      textArea = {x:x+pad+imgSize+pad, y:y+pad, w:w-imgSize-pad*3, h:h-2*pad};
+    } else {
+      const imgH = h*0.5;
+      imgArea = {x:x+pad, y:y+pad, w:w-2*pad, h:imgH-pad*1.5};
+      textArea = {x:x+pad, y:y+imgH+pad*0.5, w:w-2*pad, h:h-imgH-pad*1.5};
+    }
+    const textW = textArea.w;
+
+    doc.setDrawColor(241,245,249); doc.setLineWidth(1);
+    doc.roundedRect(x,y,w,h,4,4,'S');
+    doc.setFillColor(248,250,252);
+    doc.rect(imgArea.x, imgArea.y, imgArea.w, imgArea.h, 'F');
+    if(imgDataUrl){
+      const fitSize = Math.min(imgArea.w, imgArea.h);
+      const ix = imgArea.x + (imgArea.w-fitSize)/2;
+      const iy = imgArea.y + (imgArea.h-fitSize)/2;
+      doc.addImage(imgDataUrl,'JPEG', ix, iy, fitSize, fitSize);
+    }
+
+    doc.setFont('helvetica','bold'); doc.setFontSize(titleSize);
+    const titleLines = doc.splitTextToSize(d.productName||item.label, textW);
+    doc.setFont('helvetica','normal'); doc.setFontSize(bodySize);
+    const lines = [
+      'SKU: '+(d.sku||'—')+'    Price: '+(d.price?('€'+d.price):'—'),
+      'Qty: '+(d.quantity||'—')+'   Size: '+(d.size||'—')+'   Colour: '+(d.colour||'—'),
+      'Material: '+(d.material||'—'),
+      'Decoration: '+(d.decorationType||'—')+'   Placement: '+(d.placement||'—'),
+      'Artwork: '+(d.artworkW||'—')+'" x '+(d.artworkH||'—')+'"   Thread: '+(d.threadColour||'—')
+    ];
+    const wrappedLines = lines.map(l=>doc.splitTextToSize(l, textW));
+    let noteWrapped = null;
+    if(d.notes){ noteWrapped = doc.splitTextToSize('Note: '+d.notes, textW); }
+
+    const bottom = textArea.y+textArea.h-4;
+    let ty = textArea.y + titleSize;
+    doc.setFont('helvetica','bold'); doc.setFontSize(titleSize); doc.setTextColor(15,23,42);
+    doc.text(titleLines, textArea.x, ty);
+    ty += titleLines.length*(titleSize+3) + 6;
+
+    doc.setFont('helvetica','normal'); doc.setFontSize(bodySize); doc.setTextColor(30,41,59);
+    for(const wl of wrappedLines){
+      if(ty > bottom) break;
+      doc.text(wl, textArea.x, ty);
+      ty += wl.length*lineH;
+    }
+    if(noteWrapped && ty<=bottom){
+      doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(220,38,38);
+      const maxLines = Math.max(1, Math.floor((bottom-ty)/18));
+      doc.text(noteWrapped.slice(0,maxLines), textArea.x, ty);
+    }
+    return h;
+  }
+
+  generatePDF(){
+    if(this.state.exporting) return;
+    if(!window.jspdf){ console.error('jsPDF not loaded'); return; }
+    this.syncCanvasJSON();
+    this.setState({exporting:true});
+    const settings = this.state.exportSettings;
+    const items = this.state.items;
+    const companyName = this.props.companyName || 'PromoWear.ie';
+    const base = this.state.canvasBaseSize || 600;
+
+    const renderItemImage = (item)=> new Promise((resolve)=>{
+      const off = document.createElement('canvas');
+      const tempFabric = new window.fabric.StaticCanvas(off, {width:base,height:base});
+      const finish = ()=>{
+        const url = tempFabric.toDataURL({format:'jpeg', quality:0.82, multiplier:2});
+        tempFabric.dispose();
+        resolve(url);
+      };
+      tempFabric.setBackgroundColor(item.canvasBgColor||'#ffffff', ()=>{
+        if(item.canvasJSON){ tempFabric.loadFromJSON(item.canvasJSON, ()=>{ tempFabric.renderAll(); finish(); }); }
+        else finish();
+      });
+    });
+
+    const clientLogoUrl = this.state.clientInfo.logoAssetId && this.state.assets[this.state.clientInfo.logoAssetId] ? this.state.assets[this.state.clientInfo.logoAssetId].url : null;
+
+    Promise.all([
+      Promise.all(items.map(renderItemImage)),
+      this.loadImageAsDataURL('uploads/company_logo-1783508565185.png').catch(()=>null),
+      clientLogoUrl ? this.loadImageAsDataURL(clientLogoUrl).catch(()=>null) : Promise.resolve(null)
+    ]).then(([images, companyLogo, clientLogo])=>{
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({unit:'pt', format:'a4', compress:true});
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 36, headerH = 92;
+      const footerH = settings.includeTerms ? 48 : 30;
+
+      let rows, cols;
+      if(settings.perPage==2){ if(settings.orientation==='v'){rows=1;cols=2;} else {rows=2;cols=1;} }
+      else if(settings.perPage==3){ rows=3; cols=1; }
+      else if(settings.perPage==4){ rows=2; cols=2; }
+      else { rows=1; cols=1; }
+      const perPage = rows*cols;
+      const totalPages = Math.max(1, Math.ceil(items.length/perPage));
+
+      const drawHeader = ()=>{
+        const logoH = 54;
+        const logoBoxBottom = margin-8 + logoH+16;
+        const lineY = logoBoxBottom + 12;
+        if(companyLogo){
+          const ratio = companyLogo.w/companyLogo.h; const w=logoH*ratio;
+          doc.setFillColor(248,250,252);
+          doc.roundedRect(margin-8, margin-8, w+16, logoH+16, 6,6,'F');
+          doc.addImage(companyLogo.url,'PNG', margin, margin, w, logoH);
+        } else {
+          doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(15,23,42);
+          doc.text(companyName, margin, margin+18);
+        }
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(148,163,184);
+        doc.text('Quote #'+(settings.quoteNumber||'—')+'   '+(settings.date||''), pageW-margin, margin+10, {align:'right'});
+        if(clientLogo){
+          const ratio = clientLogo.w/clientLogo.h; const h=26, w=h*ratio;
+          doc.addImage(clientLogo.url,'PNG', pageW-margin-w, margin+16, w, h);
+        }
+        doc.setDrawColor(15,23,42); doc.setLineWidth(1.2);
+        doc.line(margin, lineY, pageW-margin, lineY);
+      };
+      const drawFooter = (pageNum)=>{
+        let fy = pageH-margin+12;
+        if(settings.includeTerms && settings.termsText){
+          doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(180,185,195);
+          const termsWrapped = doc.splitTextToSize(settings.termsText, pageW-2*margin);
+          doc.text(termsWrapped.slice(0,3), margin, fy);
+          fy += termsWrapped.slice(0,3).length*8 + 4;
+        }
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(203,213,225);
+        doc.text(companyName+' · Confidential Proof Document', margin, fy);
+        if(settings.includePageNumbers){ doc.text('Page '+pageNum+' of '+totalPages, pageW-margin, fy, {align:'right'}); }
+      };
+
+      const contentTop = margin+headerH+8;
+      const contentBottom = pageH-margin-footerH;
+      const contentH = contentBottom-contentTop;
+      const contentW = pageW-2*margin;
+      const gap = 14;
+      const slotW = (contentW-(cols-1)*gap)/cols;
+      const slotH = (contentH-(rows-1)*gap)/rows;
+
+      for(let p=0;p<totalPages;p++){
+        if(p>0) doc.addPage();
+        drawHeader();
+        for(let s=0;s<perPage;s++){
+          const idx = p*perPage+s;
+          if(idx>=items.length) break;
+          const item = items[idx];
+          const img = images[idx];
+          const row = Math.floor(s/cols), col = s%cols;
+          const slotX = margin+col*(slotW+gap);
+          const slotY = contentTop+row*(slotH+gap);
+          this.drawItemCard(doc, item, img, slotX, slotY, slotW, slotH, settings.orientation);
+        }
+        if(p===totalPages-1 && settings.extraNotes){
+          doc.setFont('helvetica','bold'); doc.setFontSize(15);
+          const noteWrapped = doc.splitTextToSize(settings.extraNotes, contentW-24);
+          const noteLineH = 18;
+          const maxNoteH = contentH*0.45;
+          const noteBoxH = Math.min(maxNoteH, 24 + noteWrapped.length*noteLineH);
+          const maxLines = Math.max(1, Math.floor((noteBoxH-24)/noteLineH));
+          const shownLines = noteWrapped.slice(0, maxLines);
+          const noteY = contentBottom-noteBoxH;
+          doc.setFillColor(254,243,199); doc.setDrawColor(253,230,138);
+          doc.roundedRect(margin, noteY, contentW, noteBoxH, 4,4,'FD');
+          doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(146,64,14);
+          doc.text('NOTES', margin+12, noteY+13);
+          doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(220,38,38);
+          doc.text(shownLines, margin+12, noteY+13+noteLineH);
+        }
+        drawFooter(p+1);
+      }
+
+      const dateStr = (settings.date || new Date().toISOString().slice(0,10));
+      const clientName = this.state.clientInfo.name || 'Client';
+      const safeClient = clientName.replace(/[^a-z0-9]+/gi,'') || 'Client';
+      doc.save('Mockup_'+safeClient+'_'+dateStr+'.pdf');
+      this.setState({exporting:false, exportModalOpen:false});
+    }).catch(err=>{
+      console.error('PDF export failed', err);
+      this.setState({exporting:false});
+    });
+  }
+
+  downloadBackupZip(){
+    this.flushSave();
+    const zip = new window.JSZip();
+    const dataObj = { items:this.state.items, clientInfo:this.state.clientInfo, exportSettings:this.state.exportSettings, exportedAt:new Date().toISOString() };
+    zip.file('data.json', JSON.stringify(dataObj, null, 2));
+    const assetsFolder = zip.folder('assets');
+    this.idbGetAll('assets').then(records=>{
+      records.forEach(r=> assetsFolder.file(r.id+'-'+r.filename, r.blob));
+      return zip.generateAsync({type:'blob'});
+    }).then(blob=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href=url; a.download='promowear-draft-backup.zip';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    }).catch(err=>console.error('backup failed', err));
+  }
+
+  triggerImport(){ this.importInputRef.current && this.importInputRef.current.click(); }
+
+  handleImportChange(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    window.JSZip.loadAsync(file).then(zip=>{
+      return zip.file('data.json').async('string').then(jsonStr=>{
+        const data = JSON.parse(jsonStr);
+        const filePromises = [];
+        zip.folder('assets').forEach((relPath, fileEntry)=>{
+          const id = relPath.split('-')[0];
+          filePromises.push(fileEntry.async('blob').then(blob=>({id, relPath, blob})));
+        });
+        return Promise.all(filePromises).then(results=>{
+          const assets = {};
+          const putPromises = results.map(r=>{
+            const filename = r.relPath.substring(r.id.length+1);
+            const mimeType = r.blob.type || 'application/octet-stream';
+            return this.idbPut('assets', {id:r.id, blob:r.blob, filename, mimeType}).then(()=>{
+              assets[r.id] = { url: URL.createObjectURL(r.blob), filename, mimeType };
+            });
+          });
+          return Promise.all(putPromises).then(()=>{
+            this.setState({
+              items: data.items || this.state.items,
+              clientInfo: data.clientInfo || this.state.clientInfo,
+              exportSettings: data.exportSettings || this.state.exportSettings,
+              activeItemId: (data.items && data.items[0]) ? data.items[0].id : this.state.activeItemId,
+              assets: {...this.state.assets, ...assets}
+            }, ()=>{ this.rebuildCanvasForActiveItem(); this.flushSave(); });
+          });
+        });
+      });
+    }).catch(err=>console.error('import failed', err));
+    e.target.value='';
+  }
+
+  connectOdoo(){ console.log('Odoo integration not yet implemented — stub for future release'); }
+
+  renderVals(){
+    const activeItem = this.getActiveItem() || this.makeItem(1);
+    const accentColor = this.props.accentColor || '#3498B5';
+    const companyName = this.props.companyName || 'PromoWear.ie';
+    const uf = (key)=> (e)=> this.updateDetail(key, e.target.value);
+
+    const items = this.state.items.map(it=>({
+      ...it,
+      isActive: it.id===this.state.activeItemId,
+      isInactive: it.id!==this.state.activeItemId,
+      onSelect: ()=>this.switchItem(it.id),
+      onRemove: (e)=>{ e.stopPropagation(); this.removeItem(it.id); },
+      onLabelChange: (e)=>this.updateItemLabel(it.id, e.target.value)
+    }));
+
+    const copyLabels = { logos:'Same logos', position:'Same position', size:'Same size', details:'Same product details', decoration:'Same decoration' };
+    const copyFlagList = Object.keys(copyLabels).map(key=>({
+      key, label:copyLabels[key],
+      checked: this.state.copyFlags[key],
+      unchecked: !this.state.copyFlags[key],
+      toggle: ()=>this.toggleCopyFlag(key)
+    }));
+
+    const logoChips = (activeItem.logoAssetIds||[]).map(id=>({
+      id,
+      filename: this.state.assets[id] ? this.state.assets[id].filename : 'logo',
+      remove: ()=>this.removeLogoChip(id)
+    }));
+
+    const orientationOptions = [
+      {key:'h', label:'Horizontal', desc:'image ← · details →'},
+      {key:'v', label:'Vertical', desc:'image ↑ · details ↓'}
+    ].map(o=>({...o, isSelected: this.state.exportSettings.orientation===o.key, isUnselected: this.state.exportSettings.orientation!==o.key, select: ()=>this.updateExportSetting('orientation', o.key)}));
+
+    const perPageOptions = [1,2,3,4].map(n=>({
+      n, isSelected: this.state.exportSettings.perPage===n, isUnselected: this.state.exportSettings.perPage!==n,
+      select: ()=>this.updateExportSetting('perPage', n)
+    }));
+
+    const bgColorSwatches = ['#ffffff','#f1f5f9','#0f172a', accentColor, '#fef3c7'].map(c=>({color:c, select:()=>this.setCanvasBgColor(c)}));
+
+    return {
+      companyName,
+      accentColor,
+      canvasDisplaySize: this.state.canvasDisplaySize,
+      canvasBaseSize: this.state.canvasBaseSize,
+      canvasSizeOptions: [400,500,600,700,800,900,1000],
+      setCanvasBaseSize: (e)=>this.setCanvasBaseSize(e),
+      hasSelection: !!(this.state.selectedObjType) && this.state.renderTick>=0 && !!this.getSelectedObj(),
+      selectedWidth: this.getSelectedObj() ? Math.round(this.getSelectedObj().getScaledWidth()) : 0,
+      selectedHeight: this.getSelectedObj() ? Math.round(this.getSelectedObj().getScaledHeight()) : 0,
+      setSelectedWidth: (e)=>this.setSelectedWidth(e),
+      setSelectedHeight: (e)=>this.setSelectedHeight(e),
+      stopPropagation: (e)=>e.stopPropagation(),
+      items,
+      leftPanelVisible: this.state.leftPanelVisible,
+      leftPanelToggleLabel: this.state.leftPanelVisible ? 'Hide Panel' : 'Show Panel',
+      toggleLeftPanel: ()=>this.toggleLeftPanel(),
+      zoomLevel: this.state.zoomLevel,
+      zoomPercentLabel: Math.round(this.state.zoomLevel*100)+'%',
+      zoomIn: ()=>this.zoomIn(),
+      zoomOut: ()=>this.zoomOut(),
+      zoomReset: ()=>this.zoomReset(),
+      showCopyBanner: this.state.items.length>1 && this.state.activeItemId!==this.state.items[0].id,
+      firstItemLabel: this.state.items[0].label,
+      copyFlagList,
+      addItem: ()=>this.addItem(),
+      mainImgInputRef: this.mainImgInputRef,
+      logoInputRef: this.logoInputRef,
+      bgImgInputRef: this.bgImgInputRef,
+      clientLogoInputRef: this.clientLogoInputRef,
+      importInputRef: this.importInputRef,
+      canvasRef: this.canvasRef,
+      handleMainImageChange: (e)=>this.handleMainImageChange(e),
+      handleLogoChange: (e)=>this.handleLogoChange(e),
+      handleBgImageChange: (e)=>this.handleBgImageChange(e),
+      handleClientLogoChange: (e)=>this.handleClientLogoChange(e),
+      handleImportChange: (e)=>this.handleImportChange(e),
+      handleCustomBgColor: (e)=>this.setCanvasBgColor(e.target.value),
+      triggerMainImageUpload: ()=>this.mainImgInputRef.current && this.mainImgInputRef.current.click(),
+      triggerLogoUpload: ()=>this.logoInputRef.current && this.logoInputRef.current.click(),
+      triggerBgImageUpload: ()=>this.bgImgInputRef.current && this.bgImgInputRef.current.click(),
+      triggerClientLogoUpload: ()=>this.clientLogoInputRef.current && this.clientLogoInputRef.current.click(),
+      triggerImport: ()=>this.triggerImport(),
+      downloadBackup: ()=>this.downloadBackupZip(),
+      saveDraftNow: ()=>this.saveDraftNow(),
+      saveStatusLabel: this.state.saveStatus==='saving' ? 'Saving…' : 'Saved',
+      mainImageBtnLabel: activeItem.mainImageAssetId ? 'Replace Image' : 'Upload Image',
+      showUploadPrompt: !activeItem.mainImageAssetId,
+      shirtLockLabel: this.state.shirtLocked ? '🔒 Unlock Resize' : '🔓 Lock Shirt',
+      toggleShirtLock: ()=>this.toggleShirtLock(),
+      bgColorPopoverOpen: this.state.bgColorPopoverOpen,
+      toggleBgColorPopover: ()=>this.setState(prev=>({bgColorPopoverOpen:!prev.bgColorPopoverOpen})),
+      bgColorSwatches,
+      isLogoSelected: this.state.selectedObjType==='logo',
+      isGarmentSelected: this.state.selectedObjType==='garment',
+      rotateSelected: ()=>this.rotateSelected(),
+      resetTransformSelected: ()=>this.resetTransformSelected(),
+      removeBgSelected: ()=>this.removeBgSelected(),
+      deleteSelected: ()=>this.deleteSelected(),
+      perspectiveActive: this.state.perspectiveActive,
+      perspectiveInactive: !this.state.perspectiveActive,
+      startPerspective: ()=>this.startPerspective(),
+      cancelPerspective: ()=>this.cancelPerspective(),
+      applyPerspective: ()=>this.applyPerspective(),
+      cropActive: this.state.cropActive,
+      cropInactive: !this.state.cropActive,
+      startCrop: ()=>this.startCrop(),
+      cancelCrop: ()=>this.cancelCrop(),
+      applyCrop: ()=>this.applyCrop(),
+      undo: ()=>this.undo(),
+      redo: ()=>this.redo(),
+      hasBgImage: !!activeItem.canvasBgAssetId,
+      removeBgImage: ()=>this.removeBgImage(),
+      startCanvasResize: (e)=>this.startCanvasResize(e),
+      activeItem,
+      updateProductName: uf('productName'),
+      updateSku: uf('sku'),
+      updateQuantity: uf('quantity'),
+      updateSize: uf('size'),
+      updateColour: uf('colour'),
+      updateMaterial: uf('material'),
+      updateOther: uf('other'),
+      updateDecorationType: uf('decorationType'),
+      updatePlacement: uf('placement'),
+      updateArtworkW: uf('artworkW'),
+      updateArtworkH: uf('artworkH'),
+      updateThreadColour: uf('threadColour'),
+      updateNotes: uf('notes'),
+      updatePrice: uf('price'),
+      decorationOptions: ['Embroidery','Print','Bespoke'],
+      exportModalOpen: this.state.exportModalOpen,
+      openExportModal: ()=>this.openExportModal(),
+      closeExportModal: ()=>this.closeExportModal(),
+      itemCount: this.state.items.length,
+      clientInfo: this.state.clientInfo,
+      clientLogoLabel: this.state.clientInfo.logoAssetId && this.state.assets[this.state.clientInfo.logoAssetId] ? this.state.assets[this.state.clientInfo.logoAssetId].filename : 'Upload client logo',
+      updateClientName: (e)=>this.updateClientInfo('name', e.target.value),
+      exportSettings: this.state.exportSettings,
+      updateQuoteNumber: (e)=>this.updateExportSetting('quoteNumber', e.target.value),
+      updateDate: (e)=>this.updateExportSetting('date', e.target.value),
+      updateExtraNotes: (e)=>this.updateExportSetting('extraNotes', e.target.value),
+      updateTermsText: (e)=>this.updateExportSetting('termsText', e.target.value),
+      orientationOptions,
+      perPageOptions,
+      notIncludePageNumbers: !this.state.exportSettings.includePageNumbers,
+      notIncludeTerms: !this.state.exportSettings.includeTerms,
+      togglePageNumbers: ()=>this.updateExportSetting('includePageNumbers', !this.state.exportSettings.includePageNumbers),
+      toggleTerms: ()=>this.updateExportSetting('includeTerms', !this.state.exportSettings.includeTerms),
+      exporting: this.state.exporting,
+      notExporting: !this.state.exporting,
+      generatePDF: ()=>this.generatePDF(),
+      odooModalOpen: this.state.odooModalOpen,
+      openOdooModal: ()=>this.setState({odooModalOpen:true, exportModalOpen:false}),
+      closeOdooModal: ()=>this.setState({odooModalOpen:false}),
+      connectOdoo: ()=>this.connectOdoo()
+    };
+  }
+}
+
+</script>
+</body>
+</html>

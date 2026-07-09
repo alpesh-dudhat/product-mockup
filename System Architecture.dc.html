@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #0f172a; font-family: 'DM Sans', sans-serif; color: #e2e8f0; }
+  * { box-sizing: border-box; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 24px; }
+  .tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; }
+  .tag-teal { background: rgba(52,152,181,.2); color: #56b8d8; border: 1px solid rgba(52,152,181,.3); }
+  .tag-purple { background: rgba(139,92,246,.2); color: #a78bfa; border: 1px solid rgba(139,92,246,.3); }
+  .tag-amber { background: rgba(245,158,11,.2); color: #fbbf24; border: 1px solid rgba(245,158,11,.3); }
+  .tag-green { background: rgba(16,185,129,.2); color: #34d399; border: 1px solid rgba(16,185,129,.3); }
+  .tag-red { background: rgba(239,68,68,.2); color: #f87171; border: 1px solid rgba(239,68,68,.3); }
+  .tag-slate { background: rgba(100,116,139,.15); color: #94a3b8; border: 1px solid rgba(100,116,139,.25); }
+  .arrow { color: #475569; font-size: 18px; }
+  .field-row { display: flex; align-items: flex-start; gap: 12px; padding: 7px 0; border-bottom: 1px solid #1e293b; }
+  .field-name { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #56b8d8; min-width: 140px; flex-shrink: 0; }
+  .field-type { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a78bfa; min-width: 100px; flex-shrink: 0; }
+  .field-desc { font-size: 11px; color: #64748b; line-height: 1.5; }
+  .module-card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .module-title { font-size: 13px; font-weight: 700; color: #f1f5f9; }
+  .module-desc { font-size: 11px; color: #64748b; line-height: 1.5; }
+  .flow-box { background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 8px 14px; font-size: 12px; font-weight: 500; text-align: center; }
+  .flow-box.active { border-color: #3498B5; color: #56b8d8; background: rgba(52,152,181,.08); }
+  .flow-box.storage { border-color: #10b981; color: #34d399; background: rgba(16,185,129,.08); }
+  .flow-box.output { border-color: #f59e0b; color: #fbbf24; background: rgba(245,158,11,.08); }
+  h2 { font-size: 20px; font-weight: 700; color: #f1f5f9; margin: 0 0 20px; }
+  h3 { font-size: 13px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .6px; margin: 0 0 12px; }
+</style>
+</helmet>
+
+<!-- TOP BAR -->
+<div style="position:sticky;top:0;z-index:100;background:#0a1120;border-bottom:1px solid #1e293b;padding:0 32px;display:flex;align-items:center;gap:16px;height:52px;">
+  <div style="width:28px;height:28px;background:#3498B5;border-radius:6px;display:flex;align-items:center;justify-content:center;">
+    <div style="width:14px;height:14px;background:#fff;border-radius:2px;opacity:.9;"></div>
+  </div>
+  <span style="font-size:14px;font-weight:700;color:#f1f5f9;">PromoWear Mockup Builder — System Architecture</span>
+  <div style="margin-left:auto;display:flex;gap:16px;">
+    <a href="#stack" style="font-size:12px;color:#475569;text-decoration:none;">Stack</a>
+    <a href="#data" style="font-size:12px;color:#475569;text-decoration:none;">Data Models</a>
+    <a href="#idb" style="font-size:12px;color:#475569;text-decoration:none;">IndexedDB</a>
+    <a href="#modules" style="font-size:12px;color:#475569;text-decoration:none;">Modules</a>
+    <a href="#flow" style="font-size:12px;color:#475569;text-decoration:none;">State Flow</a>
+    <a href="#pdf" style="font-size:12px;color:#475569;text-decoration:none;">PDF Engine</a>
+  </div>
+</div>
+
+<div style="max-width:1100px;margin:0 auto;padding:48px 32px 80px;display:flex;flex-direction:column;gap:48px;">
+
+  <!-- HEADER -->
+  <div>
+    <div style="font-size:11px;font-weight:600;color:#3498B5;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Browser-Only · No Backend Required</div>
+    <h1 style="font-size:38px;font-weight:700;color:#f1f5f9;margin:0 0 12px;letter-spacing:-.5px;">System Architecture</h1>
+    <p style="font-size:15px;color:#64748b;margin:0;max-width:560px;line-height:1.6;">Full client-side application. All data stored in IndexedDB. No server, no login, no upload limits.</p>
+  </div>
+
+  <!-- ═══ TECH STACK ═══ -->
+  <div id="stack" style="scroll-margin-top:68px;">
+    <h2>Technology Stack</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+
+      <div class="module-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;background:rgba(52,152,181,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">🎨</div>
+          <div>
+            <div class="module-title">Fabric.js 6</div>
+            <span class="tag tag-teal">Canvas</span>
+          </div>
+        </div>
+        <div class="module-desc">Interactive canvas engine. Handles drag, resize, rotate, crop, perspective transform on logos. Serialises full canvas state to JSON for IndexedDB storage.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569;">cdn.jsdelivr.net/npm/fabric</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;background:rgba(139,92,246,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">✨</div>
+          <div>
+            <div class="module-title">@imgly/background-removal</div>
+            <span class="tag tag-purple">WASM</span>
+          </div>
+        </div>
+        <div class="module-desc">Runs entirely in-browser via WebAssembly. No API key, no cost. Removes logo/image backgrounds with AI quality. ~2–5s processing time.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569;">cdn.jsdelivr.net/npm/@imgly/background-removal</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;background:rgba(245,158,11,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">📄</div>
+          <div>
+            <div class="module-title">jsPDF + html2canvas</div>
+            <span class="tag tag-amber">PDF</span>
+          </div>
+        </div>
+        <div class="module-desc">html2canvas renders each Fabric.js canvas to a high-res PNG (2×/3× scale). jsPDF composes the final PDF with chosen layout (1/2/3/4-up, horizontal/vertical).</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569;">cdnjs · unpkg</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;background:rgba(16,185,129,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">🗄</div>
+          <div>
+            <div class="module-title">IndexedDB (idb)</div>
+            <span class="tag tag-green">Storage</span>
+          </div>
+        </div>
+        <div class="module-desc">Native browser database. Stores images as raw Blobs (no base64 bloat), canvas JSON, form data and session metadata. Effectively unlimited storage.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569;">npm/idb — thin promise wrapper</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;background:rgba(52,152,181,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>
+          <div>
+            <div class="module-title">JSZip</div>
+            <span class="tag tag-teal">Export</span>
+          </div>
+        </div>
+        <div class="module-desc">Bundles draft data + images into a downloadable .zip file for the "Download backup" feature. User re-imports the zip to restore a session on any device.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569;">stuk.github.io/jszip</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;background:rgba(100,116,139,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">⚛</div>
+          <div>
+            <div class="module-title">Vanilla JS + DC Runtime</div>
+            <span class="tag tag-slate">Core</span>
+          </div>
+        </div>
+        <div class="module-desc">Built as a Design Component (.dc.html). No build step, no bundler. External libraries loaded from CDN via &lt;script&gt; in &lt;helmet&gt;. State managed in the DCLogic class.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#475569;">Mockup Builder.dc.html</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ DATA MODELS ═══ -->
+  <div id="data" style="scroll-margin-top:68px;">
+    <h2>Data Models</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+      <!-- Session -->
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <span class="tag tag-teal" style="font-size:12px;padding:3px 10px;">Session</span>
+          <span style="font-size:11px;color:#475569;">Top-level order/project</span>
+        </div>
+        <div style="display:flex;flex-direction:column;">
+          <div class="field-row"><span class="field-name">id</span><span class="field-type">string</span><span class="field-desc">UUID — IndexedDB primary key</span></div>
+          <div class="field-row"><span class="field-name">name</span><span class="field-type">string</span><span class="field-desc">User-facing session name e.g. "Acme Corp Order"</span></div>
+          <div class="field-row"><span class="field-name">createdAt</span><span class="field-type">number</span><span class="field-desc">Unix timestamp</span></div>
+          <div class="field-row"><span class="field-name">updatedAt</span><span class="field-type">number</span><span class="field-desc">Updated on every save</span></div>
+          <div class="field-row"><span class="field-name">itemIds</span><span class="field-type">string[]</span><span class="field-desc">Ordered array of Item IDs</span></div>
+          <div class="field-row"><span class="field-name">exportSettings</span><span class="field-type">ExportSettings</span><span class="field-desc">Last-used PDF export config</span></div>
+          <div class="field-row" style="border:none;"><span class="field-name">clientInfo</span><span class="field-type">ClientInfo</span><span class="field-desc">Client name, company, logo asset ID</span></div>
+        </div>
+      </div>
+
+      <!-- Item -->
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <span class="tag tag-purple" style="font-size:12px;padding:3px 10px;">Item</span>
+          <span style="font-size:11px;color:#475569;">One product (t-shirt, hoodie…)</span>
+        </div>
+        <div style="display:flex;flex-direction:column;">
+          <div class="field-row"><span class="field-name">id</span><span class="field-type">string</span><span class="field-desc">UUID</span></div>
+          <div class="field-row"><span class="field-name">label</span><span class="field-type">string</span><span class="field-desc">Tab label e.g. "T-Shirt #1"</span></div>
+          <div class="field-row"><span class="field-name">mainImageId</span><span class="field-type">string</span><span class="field-desc">FK → Asset (the garment photo)</span></div>
+          <div class="field-row"><span class="field-name">canvasJSON</span><span class="field-type">string</span><span class="field-desc">Fabric.js canvas.toJSON() — full canvas state incl. logo objects, positions, transforms</span></div>
+          <div class="field-row"><span class="field-name">canvasBg</span><span class="field-type">string</span><span class="field-desc">Hex colour or asset ID for custom BG</span></div>
+          <div class="field-row"><span class="field-name">logoIds</span><span class="field-type">string[]</span><span class="field-desc">FK → Asset[] (uploaded logos)</span></div>
+          <div class="field-row" style="border:none;"><span class="field-name">details</span><span class="field-type">ProductDetails</span><span class="field-desc">All form fields (see below)</span></div>
+        </div>
+      </div>
+
+      <!-- ProductDetails -->
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <span class="tag tag-amber" style="font-size:12px;padding:3px 10px;">ProductDetails</span>
+          <span style="font-size:11px;color:#475569;">Embedded in Item</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+          <div class="field-row"><span class="field-name">productName</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">sku</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">quantity</span><span class="field-type">number</span></div>
+          <div class="field-row"><span class="field-name">size</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">colour</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">material</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">decorationType</span><span class="field-type">enum</span></div>
+          <div class="field-row"><span class="field-name">placement</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">artworkW</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">artworkH</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">threadColour</span><span class="field-type">string</span></div>
+          <div class="field-row"><span class="field-name">price</span><span class="field-type">number</span></div>
+          <div class="field-row"><span class="field-name">notes</span><span class="field-type">string</span></div>
+          <div class="field-row" style="border:none;"><span class="field-name">other</span><span class="field-type">string</span></div>
+        </div>
+      </div>
+
+      <!-- Asset + ExportSettings -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <span class="tag tag-green" style="font-size:12px;padding:3px 10px;">Asset</span>
+            <span style="font-size:11px;color:#475569;">Any uploaded file (image / logo)</span>
+          </div>
+          <div style="display:flex;flex-direction:column;">
+            <div class="field-row"><span class="field-name">id</span><span class="field-type">string</span><span class="field-desc">UUID — IDB key</span></div>
+            <div class="field-row"><span class="field-name">filename</span><span class="field-type">string</span><span class="field-desc">Original filename</span></div>
+            <div class="field-row"><span class="field-name">mimeType</span><span class="field-type">string</span><span class="field-desc">image/png, image/svg+xml…</span></div>
+            <div class="field-row"><span class="field-name">blob</span><span class="field-type">Blob</span><span class="field-desc">Raw binary — stored as IDB Blob (no base64)</span></div>
+            <div class="field-row" style="border:none;"><span class="field-name">bgRemoved</span><span class="field-type">boolean</span><span class="field-desc">true after WASM BG removal run</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <span class="tag tag-amber" style="font-size:12px;padding:3px 10px;">ExportSettings</span>
+            <span style="font-size:11px;color:#475569;">PDF export config</span>
+          </div>
+          <div style="display:flex;flex-direction:column;">
+            <div class="field-row"><span class="field-name">orientation</span><span class="field-type">"h" | "v"</span><span class="field-desc">Horizontal or vertical card layout</span></div>
+            <div class="field-row"><span class="field-name">perPage</span><span class="field-type">1|2|3|4</span><span class="field-desc">Products per page</span></div>
+            <div class="field-row"><span class="field-name">quoteNumber</span><span class="field-type">string</span><span class="field-desc"></span></div>
+            <div class="field-row"><span class="field-name">date</span><span class="field-type">string</span><span class="field-desc"></span></div>
+            <div class="field-row"><span class="field-name">extraNotes</span><span class="field-type">string</span><span class="field-desc"></span></div>
+            <div class="field-row"><span class="field-name">includeTerms</span><span class="field-type">boolean</span><span class="field-desc"></span></div>
+            <div class="field-row" style="border:none;"><span class="field-name">clientLogoId</span><span class="field-type">string</span><span class="field-desc">FK → Asset</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ INDEXEDDB SCHEMA ═══ -->
+  <div id="idb" style="scroll-margin-top:68px;">
+    <h2>IndexedDB Schema</h2>
+    <div class="card">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#56b8d8;margin-bottom:20px;">DB name: <span style="color:#fbbf24;">promowear_mockup</span> &nbsp;·&nbsp; version: <span style="color:#fbbf24;">1</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+
+        <div style="background:#0f172a;border-radius:8px;padding:16px;border:1px solid #1e293b;">
+          <div style="font-size:11px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">store: sessions</div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8;">keyPath: <span style="color:#56b8d8;">"id"</span></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8;">index: <span style="color:#a78bfa;">updatedAt</span></div>
+            <div style="height:1px;background:#1e293b;margin:4px 0;"></div>
+            <div style="font-size:11px;color:#64748b;">Stores Session objects. Sorted by updatedAt for recent-sessions list.</div>
+          </div>
+        </div>
+
+        <div style="background:#0f172a;border-radius:8px;padding:16px;border:1px solid #1e293b;">
+          <div style="font-size:11px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">store: items</div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8;">keyPath: <span style="color:#56b8d8;">"id"</span></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8;">index: <span style="color:#a78bfa;">sessionId</span></div>
+            <div style="height:1px;background:#1e293b;margin:4px 0;"></div>
+            <div style="font-size:11px;color:#64748b;">One record per product item. canvasJSON can be large — stored as string, not object.</div>
+          </div>
+        </div>
+
+        <div style="background:#0f172a;border-radius:8px;padding:16px;border:1px solid #1e293b;">
+          <div style="font-size:11px;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">store: assets</div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8;">keyPath: <span style="color:#56b8d8;">"id"</span></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8;">index: <span style="color:#a78bfa;">mimeType</span></div>
+            <div style="height:1px;background:#1e293b;margin:4px 0;"></div>
+            <div style="font-size:11px;color:#64748b;">Blob stored natively — no base64. BG-removed version replaces original blob in-place.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Auto-save strategy -->
+      <div style="margin-top:20px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:16px;">
+        <div style="font-size:12px;font-weight:700;color:#34d399;margin-bottom:8px;">Auto-save strategy</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div style="font-size:12px;color:#64748b;display:flex;align-items:flex-start;gap:8px;"><span style="color:#34d399;flex-shrink:0;">1.</span>Form fields → debounced 800ms after last keystroke → write Item to IDB</div>
+          <div style="font-size:12px;color:#64748b;display:flex;align-items:flex-start;gap:8px;"><span style="color:#34d399;flex-shrink:0;">2.</span>Canvas moves/resizes → debounced 1500ms → serialize canvas.toJSON() → write Item to IDB</div>
+          <div style="font-size:12px;color:#64748b;display:flex;align-items:flex-start;gap:8px;"><span style="color:#34d399;flex-shrink:0;">3.</span>Image/logo upload → immediate → write Asset blob to IDB → update Item.logoIds</div>
+          <div style="font-size:12px;color:#64748b;display:flex;align-items:flex-start;gap:8px;"><span style="color:#34d399;flex-shrink:0;">4.</span>Tab switch → flush any pending debounced writes immediately</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MODULE BREAKDOWN ═══ -->
+  <div id="modules" style="scroll-margin-top:68px;">
+    <h2>Module Breakdown</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+
+      <div class="module-card" style="border-color:#3498B5;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="module-title">AppShell</div>
+          <span class="tag tag-teal">Layout</span>
+        </div>
+        <div class="module-desc">Top bar (logo, save, export). Item tab bar. Renders active item view. Manages session state and tab switching.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;margin-top:4px;">state: { session, activeItemId }</div>
+      </div>
+
+      <div class="module-card" style="border-color:#3498B5;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="module-title">CanvasEditor</div>
+          <span class="tag tag-teal">Core</span>
+        </div>
+        <div class="module-desc">Wraps Fabric.js canvas. Handles garment image loading, logo placement objects, transform tools (rotate, crop, perspective), BG colour/image, resize-without-quality-loss.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;margin-top:4px;">fabricCanvas, selectedObject</div>
+      </div>
+
+      <div class="module-card" style="border-color:#3498B5;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="module-title">CanvasToolbar</div>
+          <span class="tag tag-slate">UI</span>
+        </div>
+        <div class="module-desc">Toolbar above canvas. Shirt tools (resize, BG). Logo tools (rotate, scale, crop, perspective, remove BG, delete). Enabled/disabled based on selection state.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;margin-top:4px;">props: { selected, onAction }</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="module-title">DetailsPanel</div>
+          <span class="tag tag-slate">UI</span>
+        </div>
+        <div class="module-desc">Right-side scrollable panel. Three sections: Logos (upload + chip list), Product Details (all fields), Artwork &amp; Decoration. Auto-saves on change.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;margin-top:4px;">props: { item, onChange }</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="module-title">CopyFromBar</div>
+          <span class="tag tag-amber">Feature</span>
+        </div>
+        <div class="module-desc">Amber banner shown on items 2+. Checkboxes: same logos, same position, same size, same details, same decoration. On tick: copies relevant data from item[0] (or last item).</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;margin-top:4px;">props: { sourceItem, onCopy }</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="module-title">BgRemovalService</div>
+          <span class="tag tag-purple">WASM</span>
+        </div>
+        <div class="module-desc">Lazy-loads @imgly/background-removal on first use. Accepts asset Blob, returns new Blob with transparent background. Updates Asset in IDB, reloads on canvas.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;margin-top:4px;">removeBackground(blob) → Blob</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="module-title">StorageService</div>
+          <span class="tag tag-green">IDB</span>
+        </div>
+        <div class="module-desc">All IndexedDB reads/writes via idb library. Methods: saveSession, saveItem, saveAsset, loadSession, loadItems, loadAsset, exportZip, importZip.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;margin-top:4px;">singleton, promise-based</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="module-title">PDFExportModal</div>
+          <span class="tag tag-amber">Export</span>
+        </div>
+        <div class="module-desc">Modal UI: client info, layout picker (H/V + 1-4 per page), live mini-preview, extra notes. On confirm: triggers PDFEngine with settings.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;margin-top:4px;">state: { settings, isOpen }</div>
+      </div>
+
+      <div class="module-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="module-title">PDFEngine</div>
+          <span class="tag tag-amber">Export</span>
+        </div>
+        <div class="module-desc">Renders each item canvas at 3× via html2canvas → PNG. Composes A4 PDF via jsPDF using chosen layout. Adds header (PromoWear + client logos), footer, notes, page numbers.</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;margin-top:4px;">generatePDF(session, settings)</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ STATE FLOW ═══ -->
+  <div id="flow" style="scroll-margin-top:68px;">
+    <h2>State &amp; Data Flow</h2>
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Upload flow -->
+        <div>
+          <h3>Image / Logo Upload</h3>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div class="flow-box">User drops file</div>
+            <span class="arrow">→</span>
+            <div class="flow-box">FileReader → Blob</div>
+            <span class="arrow">→</span>
+            <div class="flow-box storage">Asset saved to IDB</div>
+            <span class="arrow">→</span>
+            <div class="flow-box active">Fabric.js loads URL</div>
+            <span class="arrow">→</span>
+            <div class="flow-box active">Logo object on canvas</div>
+            <span class="arrow">→</span>
+            <div class="flow-box storage">Item.canvasJSON updated</div>
+          </div>
+        </div>
+
+        <!-- BG removal flow -->
+        <div>
+          <h3>Background Removal</h3>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div class="flow-box">Click "Remove BG"</div>
+            <span class="arrow">→</span>
+            <div class="flow-box" style="border-color:#8b5cf6;color:#a78bfa;">Load WASM (once)</div>
+            <span class="arrow">→</span>
+            <div class="flow-box" style="border-color:#8b5cf6;color:#a78bfa;">Process blob ~3s</div>
+            <span class="arrow">→</span>
+            <div class="flow-box storage">New blob → IDB Asset</div>
+            <span class="arrow">→</span>
+            <div class="flow-box active">Replace Fabric object src</div>
+            <span class="arrow">→</span>
+            <div class="flow-box storage">Save canvas JSON</div>
+          </div>
+        </div>
+
+        <!-- Copy-from flow -->
+        <div>
+          <h3>Copy From Previous Item</h3>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div class="flow-box">Tick checkbox(es)</div>
+            <span class="arrow">→</span>
+            <div class="flow-box active">Read source Item from state</div>
+            <span class="arrow">→</span>
+            <div class="flow-box">Clone logoIds / canvasJSON / details</div>
+            <span class="arrow">→</span>
+            <div class="flow-box active">Apply to current Item</div>
+            <span class="arrow">→</span>
+            <div class="flow-box storage">Save to IDB</div>
+            <span class="arrow">→</span>
+            <div class="flow-box">Still editable ✓</div>
+          </div>
+        </div>
+
+        <!-- PDF export flow -->
+        <div>
+          <h3>PDF Export</h3>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div class="flow-box">Open modal</div>
+            <span class="arrow">→</span>
+            <div class="flow-box">Set layout, client info</div>
+            <span class="arrow">→</span>
+            <div class="flow-box active">Render each canvas 3× offscreen</div>
+            <span class="arrow">→</span>
+            <div class="flow-box active">html2canvas → PNG</div>
+            <span class="arrow">→</span>
+            <div class="flow-box output">jsPDF compose pages</div>
+            <span class="arrow">→</span>
+            <div class="flow-box output">Download .pdf</div>
+          </div>
+        </div>
+
+        <!-- Draft save/restore -->
+        <div>
+          <h3>Draft Save &amp; Restore</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;">
+            <div style="background:#0f172a;border-radius:8px;padding:14px;border:1px solid #1e293b;">
+              <div style="font-size:11px;font-weight:700;color:#34d399;margin-bottom:8px;">Auto-save (always on)</div>
+              <div style="font-size:11px;color:#64748b;line-height:1.6;">Form edits → debounce 800ms → IDB write<br>Canvas changes → debounce 1500ms → IDB<br>Status badge: "Saved" / "Saving…"</div>
+            </div>
+            <div style="background:#0f172a;border-radius:8px;padding:14px;border:1px solid #1e293b;">
+              <div style="font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:8px;">Download backup (manual)</div>
+              <div style="font-size:11px;color:#64748b;line-height:1.6;">JSZip: session.json + items.json + /assets/ blobs → promowear-draft.zip<br>Re-import: drag zip onto app → restore all</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PDF ENGINE DETAIL ═══ -->
+  <div id="pdf" style="scroll-margin-top:68px;">
+    <h2>PDF Engine — Layout Matrix</h2>
+    <div class="card">
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="border-bottom:1px solid #334155;">
+              <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Layout</th>
+              <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Card orientation</th>
+              <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Grid</th>
+              <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Image area</th>
+              <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Best for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #1e293b;">
+              <td style="padding:10px 14px;"><span class="tag tag-teal">1-up · H</span></td>
+              <td style="padding:10px 14px;color:#94a3b8;">Horizontal</td>
+              <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#56b8d8;">1 × 1</td>
+              <td style="padding:10px 14px;color:#94a3b8;">~45% page width</td>
+              <td style="padding:10px 14px;color:#64748b;">Premium single-product presentation</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1e293b;">
+              <td style="padding:10px 14px;"><span class="tag tag-teal">1-up · V</span></td>
+              <td style="padding:10px 14px;color:#94a3b8;">Vertical</td>
+              <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#56b8d8;">1 × 1</td>
+              <td style="padding:10px 14px;color:#94a3b8;">~50% page height</td>
+              <td style="padding:10px 14px;color:#64748b;">Wide garments, full-width hero</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1e293b;">
+              <td style="padding:10px 14px;"><span class="tag tag-purple">2-up · H</span></td>
+              <td style="padding:10px 14px;color:#94a3b8;">Horizontal</td>
+              <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#a78bfa;">1 × 2 (stacked)</td>
+              <td style="padding:10px 14px;color:#94a3b8;">~38% card width</td>
+              <td style="padding:10px 14px;color:#64748b;">Two products, still readable</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1e293b;">
+              <td style="padding:10px 14px;"><span class="tag tag-purple">2-up · V</span></td>
+              <td style="padding:10px 14px;color:#94a3b8;">Vertical</td>
+              <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#a78bfa;">2 × 1 (side by side)</td>
+              <td style="padding:10px 14px;color:#94a3b8;">full card width</td>
+              <td style="padding:10px 14px;color:#64748b;">Colour variant comparison</td>
+            </tr>
+            <tr style="border-bottom:1px solid #1e293b;">
+              <td style="padding:10px 14px;"><span class="tag tag-amber">3-up · H/V</span></td>
+              <td style="padding:10px 14px;color:#94a3b8;">Vertical</td>
+              <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#fbbf24;">3 × 1</td>
+              <td style="padding:10px 14px;color:#94a3b8;">full card width</td>
+              <td style="padding:10px 14px;color:#64748b;">Medium orders, compact overview</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 14px;"><span class="tag tag-red">4-up · H/V</span></td>
+              <td style="padding:10px 14px;color:#94a3b8;">Vertical</td>
+              <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#f87171;">2 × 2</td>
+              <td style="padding:10px 14px;color:#94a3b8;">full card width</td>
+              <td style="padding:10px 14px;color:#64748b;">Large orders, sign-off sheet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:14px;">
+        <div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:6px;">Render pipeline</div>
+        <div style="font-size:11px;color:#64748b;line-height:1.8;font-family:'JetBrains Mono',monospace;">
+          1. Mount hidden off-screen Fabric canvas at 3× resolution<br>
+          2. Load garment image + logo positions from Item.canvasJSON<br>
+          3. html2canvas({ scale: 3 }) → PNG Blob<br>
+          4. jsPDF.addImage(png, 'PNG', x, y, w, h) per product<br>
+          5. jsPDF.addPage() when page is full<br>
+          6. Draw header/footer text + logo images on each page<br>
+          7. doc.save('PromoWear-Mockup-QT-xxxx.pdf')
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

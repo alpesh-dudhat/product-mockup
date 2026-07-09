@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body { margin:0; background:#0f172a; font-family:'DM Sans',sans-serif; color:#0f172a; }
+* { box-sizing:border-box; }
+.dv-turn { padding:48px 48px 40px; border-bottom:1px solid rgba(255,255,255,.06); scroll-margin-top:16px; }
+.dv-thd { display:flex; align-items:baseline; gap:10px; margin:0 0 24px; }
+.dv-tid { font:600 10px ui-monospace,monospace; padding:3px 7px; background:#3498B5; color:#fff; border-radius:4px; text-decoration:none; }
+.dv-tname { font:600 13px/1.2 'DM Sans',sans-serif; color:#94a3b8; }
+.dv-opts { display:flex; flex-wrap:wrap; gap:32px; align-items:flex-start; }
+.dv-opt { flex:none; display:flex; flex-direction:column; gap:10px; scroll-margin-top:16px; }
+.dv-oid { font:600 10.5px ui-monospace,monospace; padding:3px 7px; background:rgba(255,255,255,.08); color:#94a3b8; border-radius:5px; text-decoration:none; }
+.dv-olabel { display:flex; align-items:baseline; gap:8px; font:400 11px/1.3 'DM Sans',sans-serif; color:#475569; }
+.dv-card { max-width:100%; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,.4); }
+.dv-opt:target .dv-oid { background:#3498B5; color:#fff; }
+.dv-next { margin:24px 0 0; font:12px/1.5 'DM Sans',sans-serif; color:#475569; }
+.screen-label { font:600 11px/1 'DM Sans',sans-serif; color:#475569; text-transform:uppercase; letter-spacing:.8px; margin-bottom:10px; }
+
+/* Reusable UI atoms */
+.btn-primary { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#3498B5; color:#fff; border:none; border-radius:7px; font:600 13px 'DM Sans',sans-serif; cursor:default; }
+.btn-secondary { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#fff; color:#0f172a; border:1.5px solid #e2e8f0; border-radius:7px; font:500 13px 'DM Sans',sans-serif; cursor:default; }
+.btn-ghost { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:#f1f5f9; color:#64748b; border:none; border-radius:6px; font:500 12px 'DM Sans',sans-serif; cursor:default; }
+.btn-tool { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; background:#fff; color:#334155; border:1.5px solid #e2e8f0; border-radius:6px; font:500 12px 'DM Sans',sans-serif; cursor:default; white-space:nowrap; }
+.btn-tool-danger { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; background:#fff5f5; color:#ef4444; border:1.5px solid #fecaca; border-radius:6px; font:500 12px 'DM Sans',sans-serif; cursor:default; white-space:nowrap; }
+.btn-tool-magic { display:inline-flex; align-items:center; gap:5px; padding:5px 11px; background:#f5f3ff; color:#7c3aed; border:1.5px solid #ddd6fe; border-radius:6px; font:600 12px 'DM Sans',sans-serif; cursor:default; white-space:nowrap; }
+.field-label { font:600 11px 'DM Sans',sans-serif; color:#475569; text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+.field-input { width:100%; padding:7px 10px; border:1.5px solid #e2e8f0; border-radius:6px; font:400 13px 'DM Sans',sans-serif; color:#0f172a; background:#fff; }
+.field-select { width:100%; padding:7px 10px; border:1.5px solid #e2e8f0; border-radius:6px; font:400 13px 'DM Sans',sans-serif; color:#0f172a; background:#fff; display:flex; justify-content:space-between; align-items:center; }
+.logo-chip-active { display:flex; align-items:center; gap:8px; padding:6px 10px; background:#e8f6fa; border:1.5px solid #3498B5; border-radius:7px; font:500 12px 'DM Sans',sans-serif; color:#1a5f75; }
+.logo-chip { display:flex; align-items:center; gap:8px; padding:6px 10px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:7px; font:500 12px 'DM Sans',sans-serif; color:#334155; }
+.section-head { font:700 12px 'DM Sans',sans-serif; color:#0f172a; text-transform:uppercase; letter-spacing:.6px; border-bottom:1.5px solid #f1f5f9; padding-bottom:8px; margin-bottom:10px; }
+.cb-on { width:15px; height:15px; background:#3498B5; border-radius:3px; border:1.5px solid #3498B5; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.cb-off { width:15px; height:15px; background:#fff; border-radius:3px; border:1.5px solid #cbd5e1; flex-shrink:0; }
+.check { width:8px; height:5px; border-left:2px solid #fff; border-bottom:2px solid #fff; transform:rotate(-45deg); margin-top:-1px; }
+
+/* checkerboard canvas bg */
+.canvas-bg {
+  background-color:#e2e8f0;
+  background-image: linear-gradient(45deg,#cbd5e1 25%,transparent 25%), linear-gradient(-45deg,#cbd5e1 25%,transparent 25%), linear-gradient(45deg,transparent 75%,#cbd5e1 75%), linear-gradient(-45deg,transparent 75%,#cbd5e1 75%);
+  background-size:16px 16px;
+  background-position:0 0,0 8px,8px -8px,-8px 0px;
+}
+</style>
+</helmet>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- TURN 1 — Main App Screen                                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Main App — Mockup Builder (full layout)</span></div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Builder — canvas + details panel (active item: T-Shirt #1)</div>
+      <div class="dv-card" style="width:1280px;">
+
+        <!-- TOP BAR -->
+        <div style="display:flex;align-items:center;height:52px;background:#0f172a;padding:0 20px;gap:16px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img src="uploads/company_logo-1783508565185.png" style="height:28px;object-fit:contain;" alt="PromoWear.ie">
+          </div>
+          <div style="width:1px;height:20px;background:#1e293b;"></div>
+          <div style="font:500 12px 'DM Sans',sans-serif;color:#475569;">Mockup Builder</div>
+          <div style="flex:1;"></div>
+          <!-- saved status -->
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:6px;height:6px;background:#10b981;border-radius:50%;"></div>
+            <span style="font:400 11px 'DM Sans',sans-serif;color:#475569;">Saved</span>
+          </div>
+          <div class="btn-secondary" style="padding:6px 14px;font-size:12px;gap:5px;"><span>💾</span>Save Draft</div>
+          <div class="btn-primary" style="padding:6px 14px;font-size:12px;gap:5px;"><span>↓</span>Export PDF</div>
+        </div>
+
+        <!-- ITEM TABS -->
+        <div style="display:flex;align-items:stretch;background:#f8fafc;border-bottom:1.5px solid #e2e8f0;padding:0 16px;gap:2px;">
+          <!-- active tab -->
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#fff;border:1.5px solid #e2e8f0;border-bottom:none;border-radius:8px 8px 0 0;margin-bottom:-1.5px;font:600 13px 'DM Sans',sans-serif;color:#0f172a;white-space:nowrap;position:relative;z-index:2;">
+            <div style="width:8px;height:8px;background:#3498B5;border-radius:50%;"></div>
+            T-Shirt #1
+            <span style="color:#cbd5e1;font-size:14px;cursor:default;">×</span>
+          </div>
+          <!-- inactive tabs -->
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:transparent;border-radius:8px 8px 0 0;font:500 13px 'DM Sans',sans-serif;color:#64748b;white-space:nowrap;cursor:default;">
+            <div style="width:8px;height:8px;background:#cbd5e1;border-radius:50%;"></div>
+            Hoodie #2
+            <span style="color:#e2e8f0;font-size:14px;">×</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:transparent;border-radius:8px 8px 0 0;font:500 13px 'DM Sans',sans-serif;color:#64748b;white-space:nowrap;cursor:default;">
+            <div style="width:8px;height:8px;background:#cbd5e1;border-radius:50%;"></div>
+            Cap #3
+            <span style="color:#e2e8f0;font-size:14px;">×</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:10px 14px;border:1.5px dashed #cbd5e1;border-radius:8px 8px 0 0;font:500 13px 'DM Sans',sans-serif;color:#94a3b8;margin-left:6px;cursor:default;">
+            + Add item
+          </div>
+        </div>
+
+        <!-- COPY-FROM BANNER -->
+        <div style="display:flex;align-items:center;gap:14px;padding:0 20px;height:42px;background:#fef3c7;border-bottom:1.5px solid #fde68a;flex-wrap:nowrap;overflow:hidden;">
+          <span style="font:700 12px 'DM Sans',sans-serif;color:#92400e;white-space:nowrap;">⚡ Copy from T-Shirt #1:</span>
+          <label style="display:flex;align-items:center;gap:7px;cursor:default;white-space:nowrap;">
+            <div class="cb-on"><div class="check"></div></div>
+            <span style="font:500 12px 'DM Sans',sans-serif;color:#78350f;">Same logos</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:default;white-space:nowrap;">
+            <div class="cb-on"><div class="check"></div></div>
+            <span style="font:500 12px 'DM Sans',sans-serif;color:#78350f;">Same position</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:default;white-space:nowrap;">
+            <div class="cb-on"><div class="check"></div></div>
+            <span style="font:500 12px 'DM Sans',sans-serif;color:#78350f;">Same size</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:default;white-space:nowrap;">
+            <div class="cb-off"></div>
+            <span style="font:500 12px 'DM Sans',sans-serif;color:#92400e;">Same product details</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:default;white-space:nowrap;">
+            <div class="cb-off"></div>
+            <span style="font:500 12px 'DM Sans',sans-serif;color:#92400e;">Same decoration</span>
+          </label>
+          <span style="font:400 11px 'DM Sans',sans-serif;color:#b45309;margin-left:auto;white-space:nowrap;">Ticked items copied — still editable below</span>
+        </div>
+
+        <!-- MAIN BODY -->
+        <div style="display:flex;height:640px;">
+
+          <!-- CANVAS AREA -->
+          <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+            <!-- TOOLBAR -->
+            <div style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:#fff;border-bottom:1.5px solid #e2e8f0;flex-wrap:nowrap;overflow-x:auto;">
+              <span style="font:600 11px 'DM Sans',sans-serif;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-right:4px;white-space:nowrap;">Garment:</span>
+              <div class="btn-tool">↔ Resize</div>
+              <div class="btn-tool">🎨 BG Colour</div>
+              <div class="btn-tool">🖼 BG Image</div>
+              <div style="width:1px;height:20px;background:#f1f5f9;margin:0 4px;flex-shrink:0;"></div>
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:#e8f6fa;border:1.5px solid #3498B5;border-radius:6px;white-space:nowrap;">
+                <span style="width:6px;height:6px;background:#3498B5;border-radius:50%;"></span>
+                <span style="font:500 12px 'DM Sans',sans-serif;color:#1a5f75;">Logo_v2.png selected</span>
+              </div>
+              <div class="btn-tool">🔄 Rotate</div>
+              <div class="btn-tool">↕ Scale</div>
+              <div class="btn-tool">✂ Crop</div>
+              <div class="btn-tool">⟂ Perspective</div>
+              <div class="btn-tool-magic">✨ Remove BG</div>
+              <div class="btn-tool-danger">🗑 Remove</div>
+            </div>
+
+            <!-- CANVAS -->
+            <div class="canvas-bg" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;">
+              <!-- shirt container -->
+              <div style="position:relative;width:300px;height:360px;">
+                <!-- shirt SVG -->
+                <svg viewBox="0 0 220 260" style="width:100%;height:100%;display:block;" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="shirtGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#94a3b8"/>
+                      <stop offset="100%" stop-color="#7a8fa6"/>
+                    </linearGradient>
+                  </defs>
+                  <!-- left sleeve -->
+                  <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="url(#shirtGrad)"/>
+                  <!-- right sleeve -->
+                  <path d="M220,88 L192,22 L146,18 L160,92 Z" fill="url(#shirtGrad)"/>
+                  <!-- body -->
+                  <path d="M56,88 L56,254 L164,254 L164,88 Z" fill="url(#shirtGrad)"/>
+                  <!-- shoulder L -->
+                  <path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#8898ab"/>
+                  <!-- shoulder R -->
+                  <path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#8898ab"/>
+                  <!-- collar curve -->
+                  <path d="M74,18 Q110,52 146,18" fill="#7a8898" stroke="none"/>
+                  <!-- shadow detail -->
+                  <path d="M56,88 L56,254 L70,254 L70,88 Z" fill="rgba(0,0,0,.05)"/>
+                  <path d="M150,88 L164,88 L164,254 L150,254 Z" fill="rgba(0,0,0,.04)"/>
+                </svg>
+
+                <!-- LOGO OVERLAY — selected, on chest -->
+                <div style="position:absolute;top:82px;left:50%;transform:translateX(-50%);width:120px;">
+                  <!-- selection box -->
+                  <div style="position:relative;border:2px solid #3498B5;border-radius:4px;padding:12px 18px;background:rgba(52,152,181,.08);cursor:move;">
+                    <div style="text-align:center;">
+                      <div style="font:700 13px 'DM Sans',sans-serif;color:#3498B5;letter-spacing:2px;">ACME</div>
+                      <div style="font:500 9px 'DM Sans',sans-serif;color:#56b8d8;letter-spacing:1px;">CORP</div>
+                    </div>
+                    <!-- corner handles -->
+                    <div style="position:absolute;top:-5px;left:-5px;width:10px;height:10px;background:#3498B5;border-radius:50%;border:2px solid #fff;"></div>
+                    <div style="position:absolute;top:-5px;right:-5px;width:10px;height:10px;background:#3498B5;border-radius:50%;border:2px solid #fff;"></div>
+                    <div style="position:absolute;bottom:-5px;left:-5px;width:10px;height:10px;background:#3498B5;border-radius:50%;border:2px solid #fff;"></div>
+                    <div style="position:absolute;bottom:-5px;right:-5px;width:10px;height:10px;background:#3498B5;border-radius:50%;border:2px solid #fff;"></div>
+                    <!-- edge handles -->
+                    <div style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:8px;height:8px;background:#fff;border:2px solid #3498B5;border-radius:1px;"></div>
+                    <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:8px;height:8px;background:#fff;border:2px solid #3498B5;border-radius:1px;"></div>
+                    <div style="position:absolute;left:-4px;top:50%;transform:translateY(-50%);width:8px;height:8px;background:#fff;border:2px solid #3498B5;border-radius:1px;"></div>
+                    <div style="position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:8px;height:8px;background:#fff;border:2px solid #3498B5;border-radius:1px;"></div>
+                    <!-- rotate handle -->
+                    <div style="position:absolute;top:-24px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;">
+                      <div style="width:10px;height:10px;background:#3498B5;border-radius:50%;border:2px solid #fff;"></div>
+                      <div style="width:1px;height:10px;background:#3498B5;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- shirt resize handle -->
+                <div style="position:absolute;bottom:-8px;right:-8px;width:16px;height:16px;background:#475569;border-radius:50%;border:2.5px solid #fff;"></div>
+              </div>
+            </div>
+
+            <!-- STATUS BAR -->
+            <div style="display:flex;align-items:center;gap:20px;padding:6px 16px;background:#fff;border-top:1.5px solid #e2e8f0;">
+              <span style="font:400 11px 'DM Sans',sans-serif;color:#94a3b8;">Zoom: 100%</span>
+              <span style="font:400 11px 'DM Sans',sans-serif;color:#e2e8f0;">|</span>
+              <span style="font:400 11px 'DM Sans',sans-serif;color:#94a3b8;">Canvas: 1200 × 900 px</span>
+              <span style="font:400 11px 'DM Sans',sans-serif;color:#e2e8f0;">|</span>
+              <span style="font:400 11px 'DM Sans',sans-serif;color:#94a3b8;">Click logo to select · Drag to reposition</span>
+            </div>
+          </div>
+
+          <!-- RIGHT PANEL -->
+          <div style="width:260px;border-left:1.5px solid #e2e8f0;background:#fff;overflow-y:auto;display:flex;flex-direction:column;">
+
+            <!-- LOGOS -->
+            <div style="padding:14px 16px;border-bottom:1.5px solid #f1f5f9;">
+              <div class="section-head">🖼 Logos</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div class="logo-chip-active">
+                  <span style="font-size:14px;">🖼</span>
+                  <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Logo_v2.png</span>
+                  <span style="color:#94a3b8;font-size:13px;">×</span>
+                </div>
+                <div class="logo-chip">
+                  <span style="font-size:14px;">🖼</span>
+                  <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Back_logo.svg</span>
+                  <span style="color:#cbd5e1;font-size:13px;">×</span>
+                </div>
+                <!-- upload zone -->
+                <div style="border:2px dashed #c4e8f2;border-radius:8px;padding:12px;text-align:center;background:#f8fdfe;">
+                  <div style="font-size:18px;margin-bottom:4px;">↑</div>
+                  <div style="font:500 12px 'DM Sans',sans-serif;color:#0f172a;margin-bottom:2px;">Upload Logo</div>
+                  <div style="font:400 10px 'DM Sans',sans-serif;color:#94a3b8;">PNG · JPG · SVG · WEBP · AI · EPS</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PRODUCT DETAILS -->
+            <div style="padding:14px 16px;border-bottom:1.5px solid #f1f5f9;">
+              <div class="section-head">📋 Product Details</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <div>
+                  <div class="field-label">Product Name</div>
+                  <div class="field-input">Gildan 5000 Heavy Cotton</div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <div style="flex:1;">
+                    <div class="field-label">SKU</div>
+                    <div class="field-input" style="font-family:'JetBrains Mono',monospace;font-size:11px;">GLD-5000</div>
+                  </div>
+                  <div style="flex:1;">
+                    <div class="field-label">Price (€)</div>
+                    <div class="field-input">12.50</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <div style="flex:1;">
+                    <div class="field-label">Quantity</div>
+                    <div class="field-input">50</div>
+                  </div>
+                  <div style="flex:1;">
+                    <div class="field-label">Size</div>
+                    <div class="field-input">L</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="field-label">Colour</div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:26px;height:26px;background:#1e293b;border-radius:50%;border:2px solid #e2e8f0;flex-shrink:0;"></div>
+                    <div class="field-input" style="flex:1;">Black</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="field-label">Material</div>
+                  <div class="field-input">100% Ring-Spun Cotton</div>
+                </div>
+                <div>
+                  <div class="field-label">Other</div>
+                  <div class="field-input" style="color:#cbd5e1;font-style:italic;">Custom field…</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ARTWORK & DECORATION -->
+            <div style="padding:14px 16px;">
+              <div class="section-head">🎨 Artwork &amp; Decoration</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <div>
+                  <div class="field-label">Decoration Type</div>
+                  <div class="field-select">
+                    <span>Embroidery</span><span style="color:#94a3b8;font-size:12px;">▾</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="field-label">Placement</div>
+                  <div class="field-input">Left Chest</div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <div style="flex:1;">
+                    <div class="field-label">Width</div>
+                    <div class="field-input">10"</div>
+                  </div>
+                  <div style="flex:1;">
+                    <div class="field-label">Height</div>
+                    <div class="field-input">8"</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="field-label">Thread / Ink Colour</div>
+                  <div class="field-input">PMS 286C – Navy</div>
+                </div>
+                <div>
+                  <div class="field-label">Special Notes</div>
+                  <div class="field-input" style="min-height:60px;resize:none;display:block;line-height:1.5;">Satin finish on lettering</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div><!-- end 1a -->
+
+  </div>
+  <p class="dv-next" style="color:#475569;">Next: see <a class="dv-oid" href="#2a">2a</a> export modal · <a class="dv-oid" href="#3a">3a</a> PDF 1-up horizontal · <a class="dv-oid" href="#3b">3b</a> PDF 1-up vertical</p>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- TURN 2 — Export Modal                                     -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Export PDF Modal</span></div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Export modal — full controls</div>
+      <div class="dv-card" style="width:480px;">
+        <!-- dim overlay indicator -->
+        <div style="background:#0f172a;padding:5px 14px;border-bottom:1px solid #1e293b;">
+          <span style="font:400 10px 'DM Sans',sans-serif;color:#334155;">App behind (dimmed overlay)</span>
+        </div>
+        <!-- modal -->
+        <div style="background:#fff;padding:28px;display:flex;flex-direction:column;gap:18px;">
+          <!-- header -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <h2 style="font:700 20px 'DM Sans',sans-serif;color:#0f172a;margin:0 0 4px;">Export PDF Mockup</h2>
+              <p style="font:400 13px 'DM Sans',sans-serif;color:#64748b;margin:0;">3 items · HD quality (300dpi)</p>
+            </div>
+            <div style="width:32px;height:32px;border-radius:7px;border:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#94a3b8;cursor:default;">×</div>
+          </div>
+
+          <div style="height:1.5px;background:#f1f5f9;"></div>
+
+          <!-- Client info -->
+          <div>
+            <div class="section-head">Client Info</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;gap:10px;">
+                <div style="flex:1;">
+                  <div class="field-label">Client Name</div>
+                  <div class="field-input">Acme Corp Ltd</div>
+                </div>
+                <div style="flex:1;">
+                  <div class="field-label">Quote / Order #</div>
+                  <div class="field-input" style="font-family:'JetBrains Mono',monospace;font-size:12px;">QT-2024-089</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <div style="flex:1;">
+                  <div class="field-label">Date</div>
+                  <div class="field-input">08 / 07 / 2025</div>
+                </div>
+                <div style="flex:1;">
+                  <div class="field-label">Client Logo</div>
+                  <div style="display:flex;align-items:center;gap:6px;padding:7px 10px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:6px;">
+                    <span style="font-size:13px;">📎</span>
+                    <span style="font:500 12px 'DM Sans',sans-serif;color:#334155;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">client_logo.png</span>
+                    <span style="font:500 11px 'DM Sans',sans-serif;color:#3498B5;cursor:default;">Change</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:1.5px;background:#f1f5f9;"></div>
+
+          <!-- Page layout -->
+          <div>
+            <div class="section-head">📐 Page Layout</div>
+
+            <!-- Orientation -->
+            <div style="margin-bottom:14px;">
+              <div class="field-label" style="margin-bottom:8px;">Card orientation</div>
+              <div style="display:flex;gap:10px;">
+                <!-- Horizontal selected -->
+                <div style="flex:1;border:2px solid #3498B5;border-radius:8px;padding:12px 8px;background:#e8f6fa;cursor:default;display:flex;flex-direction:column;align-items:center;gap:8px;">
+                  <div style="width:80px;height:52px;border:1.5px solid #3498B5;border-radius:4px;background:#fff;display:flex;gap:3px;padding:5px;">
+                    <div style="flex:0 0 34%;background:#c4e8f2;border-radius:2px;"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:2px;justify-content:center;padding:0 2px;">
+                      <div style="height:4px;background:#3498B5;border-radius:1px;opacity:.5;"></div>
+                      <div style="height:3px;background:#c4e8f2;border-radius:1px;"></div>
+                      <div style="height:3px;background:#c4e8f2;border-radius:1px;"></div>
+                      <div style="height:3px;background:#c4e8f2;border-radius:1px;"></div>
+                    </div>
+                  </div>
+                  <div style="font:700 12px 'DM Sans',sans-serif;color:#1a5f75;">Horizontal</div>
+                  <div style="font:400 10px 'DM Sans',sans-serif;color:#3498B5;">image ← · details →</div>
+                </div>
+                <!-- Vertical -->
+                <div style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:12px 8px;cursor:default;display:flex;flex-direction:column;align-items:center;gap:8px;">
+                  <div style="width:52px;height:64px;border:1.5px solid #cbd5e1;border-radius:4px;background:#fff;display:flex;flex-direction:column;gap:2px;padding:5px;">
+                    <div style="flex:0 0 36%;background:#f1f5f9;border-radius:2px;"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:2px;justify-content:center;">
+                      <div style="height:3px;background:#e2e8f0;border-radius:1px;"></div>
+                      <div style="height:3px;background:#e2e8f0;border-radius:1px;"></div>
+                      <div style="height:3px;background:#e2e8f0;border-radius:1px;"></div>
+                    </div>
+                  </div>
+                  <div style="font:500 12px 'DM Sans',sans-serif;color:#64748b;">Vertical</div>
+                  <div style="font:400 10px 'DM Sans',sans-serif;color:#94a3b8;">image ↑ · details ↓</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Per page picker -->
+            <div>
+              <div class="field-label" style="margin-bottom:8px;">Products per page</div>
+              <div style="display:flex;gap:8px;">
+                <!-- 1 selected -->
+                <div style="flex:1;border:2px solid #3498B5;border-radius:7px;padding:8px 4px;background:#e8f6fa;cursor:default;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                  <div style="width:42px;height:52px;border:1.5px solid #3498B5;border-radius:3px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:1.5px;">
+                    <div style="height:6px;background:#c4e8f2;border-radius:1px;"></div>
+                    <div style="flex:1;display:flex;gap:1.5px;">
+                      <div style="flex:0 0 38%;background:#3498B5;border-radius:1px;opacity:.4;"></div>
+                      <div style="flex:1;display:flex;flex-direction:column;gap:1px;justify-content:center;padding:1px;">
+                        <div style="height:2.5px;background:#c4e8f2;border-radius:1px;"></div>
+                        <div style="height:2.5px;background:#c4e8f2;border-radius:1px;"></div>
+                        <div style="height:2.5px;background:#c4e8f2;border-radius:1px;"></div>
+                      </div>
+                    </div>
+                    <div style="height:4px;background:#ddeeff;border-radius:1px;"></div>
+                  </div>
+                  <div style="font:700 12px 'DM Sans',sans-serif;color:#1a5f75;">1</div>
+                </div>
+                <!-- 2 -->
+                <div style="flex:1;border:1.5px solid #e2e8f0;border-radius:7px;padding:8px 4px;cursor:default;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                  <div style="width:42px;height:52px;border:1.5px solid #cbd5e1;border-radius:3px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:1.5px;">
+                    <div style="height:5px;background:#f1f5f9;border-radius:1px;"></div>
+                    <div style="flex:1;display:flex;gap:1.5px;">
+                      <div style="flex:1;background:#f1f5f9;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:60%;height:50%;background:#e2e8f0;border-radius:1px;"></div></div>
+                      <div style="flex:1;background:#f1f5f9;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:60%;height:50%;background:#e2e8f0;border-radius:1px;"></div></div>
+                    </div>
+                    <div style="height:3px;background:#f1f5f9;border-radius:1px;"></div>
+                  </div>
+                  <div style="font:500 12px 'DM Sans',sans-serif;color:#64748b;">2</div>
+                </div>
+                <!-- 3 -->
+                <div style="flex:1;border:1.5px solid #e2e8f0;border-radius:7px;padding:8px 4px;cursor:default;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                  <div style="width:42px;height:52px;border:1.5px solid #cbd5e1;border-radius:3px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:1.5px;">
+                    <div style="height:5px;background:#f1f5f9;border-radius:1px;"></div>
+                    <div style="flex:1;display:flex;gap:1px;">
+                      <div style="flex:1;background:#f1f5f9;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#e2e8f0;border-radius:1px;"></div></div>
+                      <div style="flex:1;background:#f1f5f9;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#e2e8f0;border-radius:1px;"></div></div>
+                      <div style="flex:1;background:#f1f5f9;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#e2e8f0;border-radius:1px;"></div></div>
+                    </div>
+                    <div style="height:3px;background:#f1f5f9;border-radius:1px;"></div>
+                  </div>
+                  <div style="font:500 12px 'DM Sans',sans-serif;color:#64748b;">3</div>
+                </div>
+                <!-- 4 -->
+                <div style="flex:1;border:1.5px solid #e2e8f0;border-radius:7px;padding:8px 4px;cursor:default;display:flex;flex-direction:column;align-items:center;gap:5px;">
+                  <div style="width:42px;height:52px;border:1.5px solid #cbd5e1;border-radius:3px;background:#fff;padding:3px;display:flex;flex-direction:column;gap:1.5px;">
+                    <div style="height:5px;background:#f1f5f9;border-radius:1px;"></div>
+                    <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;">
+                      <div style="background:#f1f5f9;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#e2e8f0;border-radius:1px;"></div></div>
+                      <div style="background:#f1f5f9;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#e2e8f0;border-radius:1px;"></div></div>
+                      <div style="background:#f1f5f9;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#e2e8f0;border-radius:1px;"></div></div>
+                      <div style="background:#f1f5f9;border-radius:1px;display:flex;align-items:center;justify-content:center;"><div style="width:55%;height:50%;background:#e2e8f0;border-radius:1px;"></div></div>
+                    </div>
+                    <div style="height:3px;background:#f1f5f9;border-radius:1px;"></div>
+                  </div>
+                  <div style="font:500 12px 'DM Sans',sans-serif;color:#64748b;">4</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- live mini preview -->
+            <div style="margin-top:12px;border:1.5px dashed #c4e8f2;border-radius:8px;padding:10px;background:#f8fdfe;">
+              <div style="font:600 10px 'DM Sans',sans-serif;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Preview — 1 per page · Horizontal</div>
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:4px;padding:8px;display:flex;gap:8px;height:54px;">
+                <div style="flex:0 0 38%;background:#f1f5f9;border-radius:3px;display:flex;align-items:center;justify-content:center;">
+                  <div style="width:28px;height:36px;background:#cbd5e1;border-radius:2px;position:relative;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);border:1px solid #3498B5;padding:1px 4px;background:rgba(255,255,255,.9);border-radius:1px;font:700 5px 'DM Sans',sans-serif;color:#3498B5;">LOGO</div>
+                  </div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px;justify-content:center;">
+                  <div style="height:5px;background:#e2e8f0;border-radius:1px;width:80%;"></div>
+                  <div style="height:3px;background:#f1f5f9;border-radius:1px;width:60%;"></div>
+                  <div style="height:3px;background:#f1f5f9;border-radius:1px;width:70%;"></div>
+                  <div style="height:3px;background:#f1f5f9;border-radius:1px;width:50%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:1.5px;background:#f1f5f9;"></div>
+
+          <!-- Extra notes & options -->
+          <div>
+            <div class="section-head">Notes &amp; Options</div>
+            <textarea style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font:400 12px 'DM Sans',sans-serif;color:#334155;resize:none;height:56px;margin-bottom:10px;">Proof approved by client — production to begin 10 July. All Pantone colours are approximate on screen.</textarea>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:default;"><div class="cb-on"><div class="check"></div></div><span style="font:400 13px 'DM Sans',sans-serif;color:#334155;">Include page numbers</span></label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:default;"><div class="cb-on"><div class="check"></div></div><span style="font:400 13px 'DM Sans',sans-serif;color:#334155;">PromoWear.ie logo in header</span></label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:default;"><div class="cb-off"></div><span style="font:400 13px 'DM Sans',sans-serif;color:#334155;">Terms &amp; conditions on last page</span></label>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:4px;">
+            <div class="btn-secondary">Cancel</div>
+            <div class="btn-primary" style="gap:6px;"><span>↓</span> Generate HD PDF</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end 2a -->
+
+  </div>
+  <p class="dv-next" style="color:#475569;">Next: see PDF layouts — <a class="dv-oid" href="#3a">3a</a> 1-up horizontal · <a class="dv-oid" href="#3b">3b</a> 1-up vertical · <a class="dv-oid" href="#4a">4a</a> 2-up · <a class="dv-oid" href="#4c">4c</a> 4-up</p>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- TURN 3 — PDF 1-up layouts                                 -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="dv-turn" id="t3">
+  <div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">PDF Export — 1-up layouts</span></div>
+  <div class="dv-opts">
+
+    <!-- 3a: 1-up Horizontal -->
+    <div class="dv-opt" id="3a">
+      <div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>1-up · Horizontal (image left, details right)</div>
+      <div class="dv-card" style="width:560px;background:#e8ecf0;padding:20px;">
+        <div style="background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.18);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;min-height:740px;position:relative;">
+          <!-- page number -->
+          <div style="position:absolute;bottom:16px;right:22px;font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Page 1 of 3</div>
+
+          <!-- header -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 28px 16px;border-bottom:2.5px solid #0f172a;">
+            <div>
+              <img src="uploads/company_logo-1783508565185.png" style="height:32px;object-fit:contain;" alt="PromoWear.ie">
+              <div style="font:400 9px 'DM Sans',sans-serif;color:#94a3b8;margin-top:3px;">info@promowear.ie · www.promowear.ie</div>
+            </div>
+            <div style="text-align:right;display:flex;align-items:center;gap:16px;">
+              <div>
+                <div style="font:400 9px 'DM Sans',sans-serif;color:#94a3b8;">Quote #QT-2024-089</div>
+                <div style="font:400 9px 'DM Sans',sans-serif;color:#94a3b8;">08 July 2025</div>
+              </div>
+              <div style="width:72px;height:36px;border:1.5px solid #e2e8f0;border-radius:4px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font:400 9px 'DM Sans',sans-serif;color:#94a3b8;">Client Logo</div>
+            </div>
+          </div>
+
+          <!-- meta strip -->
+          <div style="display:flex;margin:16px 28px 0;border:1.5px solid #f1f5f9;border-radius:6px;overflow:hidden;background:#f8fafc;">
+            <div style="flex:1;padding:8px 14px;border-right:1.5px solid #f1f5f9;"><div style="font:600 8px 'DM Sans',sans-serif;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Quote</div><div style="font:700 13px 'JetBrains Mono',monospace;color:#0f172a;">QT-2024-089</div></div>
+            <div style="flex:1;padding:8px 14px;border-right:1.5px solid #f1f5f9;"><div style="font:600 8px 'DM Sans',sans-serif;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Date</div><div style="font:700 13px 'DM Sans',sans-serif;color:#0f172a;">08 Jul 2025</div></div>
+            <div style="flex:1;padding:8px 14px;"><div style="font:600 8px 'DM Sans',sans-serif;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Item</div><div style="font:700 13px 'DM Sans',sans-serif;color:#0f172a;">1 of 3</div></div>
+          </div>
+
+          <!-- main content: left image, right details -->
+          <div style="display:flex;gap:0;padding:20px 28px;flex:1;">
+            <!-- LEFT: big mockup -->
+            <div style="flex:0 0 220px;display:flex;flex-direction:column;gap:10px;">
+              <div style="flex:1;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;min-height:320px;">
+                <svg viewBox="0 0 220 260" style="width:140px;" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="#94a3b8"/>
+                  <path d="M220,88 L192,22 L146,18 L160,92 Z" fill="#94a3b8"/>
+                  <path d="M56,88 L56,254 L164,254 L164,88 Z" fill="#94a3b8"/>
+                  <path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#8898ab"/>
+                  <path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#8898ab"/>
+                  <path d="M74,18 Q110,52 146,18" fill="#7a8898"/>
+                  <!-- logo on shirt -->
+                  <rect x="76" y="98" width="68" height="32" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5" stroke-dasharray="0"/>
+                  <text x="110" y="113" font-family="DM Sans" font-size="10" font-weight="700" fill="#3498B5" text-anchor="middle" letter-spacing="2">ACME</text>
+                  <text x="110" y="124" font-family="DM Sans" font-size="7" fill="#56b8d8" text-anchor="middle" letter-spacing="1">CORP</text>
+                </svg>
+                <div style="position:absolute;bottom:10px;font:400 9px 'DM Sans',sans-serif;color:#94a3b8;">HD Mockup · 300dpi</div>
+              </div>
+              <!-- logo chips -->
+              <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                <div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;background:#e8f6fa;border:1.5px solid #3498B5;border-radius:4px;font:500 10px 'DM Sans',sans-serif;color:#1a5f75;">🖼 Logo_v2.png</div>
+              </div>
+            </div>
+
+            <!-- RIGHT: details -->
+            <div style="flex:1;padding-left:24px;display:flex;flex-direction:column;gap:14px;">
+              <div style="font:700 18px 'DM Sans',sans-serif;color:#0f172a;border-bottom:1.5px solid #f1f5f9;padding-bottom:10px;">Gildan 5000 Heavy Cotton</div>
+
+              <div>
+                <div style="font:600 9px 'DM Sans',sans-serif;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Product Details</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;">
+                  <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">SKU</div><div style="font:500 12px 'JetBrains Mono',monospace;color:#0f172a;">GLD-5000</div></div>
+                  <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Price</div><div style="font:700 12px 'DM Sans',sans-serif;color:#0f172a;">€12.50</div></div>
+                  <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Quantity</div><div style="font:500 12px 'DM Sans',sans-serif;color:#0f172a;">50 pcs</div></div>
+                  <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Size</div><div style="font:500 12px 'DM Sans',sans-serif;color:#0f172a;">L</div></div>
+                  <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Colour</div><div style="font:500 12px 'DM Sans',sans-serif;color:#0f172a;display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#1e293b;border-radius:50%;display:inline-block;flex-shrink:0;"></span>Black</div></div>
+                  <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Material</div><div style="font:500 12px 'DM Sans',sans-serif;color:#0f172a;">100% Cotton</div></div>
+                </div>
+              </div>
+
+              <div style="border-top:1.5px solid #f1f5f9;padding-top:12px;">
+                <div style="font:600 9px 'DM Sans',sans-serif;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Artwork &amp; Decoration</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;">
+                  <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Type</div><div style="font:500 12px 'DM Sans',sans-serif;color:#0f172a;">Embroidery</div></div>
+                  <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Placement</div><div style="font:500 12px 'DM Sans',sans-serif;color:#0f172a;">Left Chest</div></div>
+                  <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">W × H</div><div style="font:500 12px 'DM Sans',sans-serif;color:#0f172a;">10" × 8"</div></div>
+                  <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Thread</div><div style="font:500 12px 'DM Sans',sans-serif;color:#0f172a;">PMS 286C</div></div>
+                </div>
+              </div>
+
+              <div style="flex:1;"></div>
+
+              <!-- notes -->
+              <div style="background:#fef3c7;border:1.5px solid #fde68a;border-radius:6px;padding:10px 14px;">
+                <div style="font:700 9px 'DM Sans',sans-serif;color:#92400e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Notes</div>
+                <div style="font:400 11px 'DM Sans',sans-serif;color:#78350f;line-height:1.5;">Proof approved by client — production to begin 10 July. All Pantone colours are approximate on screen.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- footer -->
+          <div style="padding:10px 28px;border-top:1.5px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;background:#fafafa;">
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">PromoWear.ie · Confidential Proof Document</div>
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Generated by PromoWear Mockup Builder</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3b: 1-up Vertical -->
+    <div class="dv-opt" id="3b">
+      <div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>1-up · Vertical (image top, details below)</div>
+      <div class="dv-card" style="width:420px;background:#e8ecf0;padding:20px;">
+        <div style="background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.18);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;min-height:740px;position:relative;">
+          <div style="position:absolute;bottom:16px;right:22px;font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Page 1 of 3</div>
+
+          <!-- header -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 24px 14px;border-bottom:2.5px solid #0f172a;">
+            <img src="uploads/company_logo-1783508565185.png" style="height:28px;object-fit:contain;" alt="PromoWear.ie">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="text-align:right;font:400 9px 'DM Sans',sans-serif;color:#94a3b8;line-height:1.7;"><div>QT-2024-089</div><div>08 July 2025</div></div>
+              <div style="width:56px;height:28px;border:1.5px solid #e2e8f0;border-radius:4px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font:400 8px 'DM Sans',sans-serif;color:#94a3b8;">Client Logo</div>
+            </div>
+          </div>
+
+          <!-- big image, full width -->
+          <div style="background:#f1f5f9;margin:16px 24px 0;border-radius:8px;height:260px;display:flex;align-items:center;justify-content:center;position:relative;">
+            <svg viewBox="0 0 220 260" style="width:150px;" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="#94a3b8"/>
+              <path d="M220,88 L192,22 L146,18 L160,92 Z" fill="#94a3b8"/>
+              <path d="M56,88 L56,254 L164,254 L164,88 Z" fill="#94a3b8"/>
+              <path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#8898ab"/>
+              <path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#8898ab"/>
+              <path d="M74,18 Q110,52 146,18" fill="#7a8898"/>
+              <rect x="76" y="98" width="68" height="32" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5"/>
+              <text x="110" y="113" font-family="DM Sans" font-size="10" font-weight="700" fill="#3498B5" text-anchor="middle" letter-spacing="2">ACME</text>
+              <text x="110" y="124" font-family="DM Sans" font-size="7" fill="#56b8d8" text-anchor="middle" letter-spacing="1">CORP</text>
+            </svg>
+            <div style="position:absolute;bottom:8px;font:400 9px 'DM Sans',sans-serif;color:#94a3b8;">HD Mockup · 300dpi</div>
+          </div>
+
+          <!-- logo chips -->
+          <div style="padding:8px 24px 0;display:flex;gap:5px;">
+            <div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;background:#e8f6fa;border:1.5px solid #3498B5;border-radius:4px;font:500 10px 'DM Sans',sans-serif;color:#1a5f75;">🖼 Logo_v2.png</div>
+          </div>
+
+          <!-- title -->
+          <div style="padding:12px 24px 8px;border-bottom:1.5px solid #f1f5f9;">
+            <div style="font:700 16px 'DM Sans',sans-serif;color:#0f172a;">Gildan 5000 Heavy Cotton</div>
+          </div>
+
+          <!-- details 2-col grid -->
+          <div style="padding:12px 24px;display:grid;grid-template-columns:1fr 1fr;gap:7px 16px;flex:1;">
+            <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">SKU</div><div style="font:500 11px 'JetBrains Mono',monospace;color:#0f172a;">GLD-5000</div></div>
+            <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Price</div><div style="font:700 11px 'DM Sans',sans-serif;color:#0f172a;">€12.50</div></div>
+            <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Quantity</div><div style="font:500 11px 'DM Sans',sans-serif;color:#0f172a;">50 pcs</div></div>
+            <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Size · Colour</div><div style="font:500 11px 'DM Sans',sans-serif;color:#0f172a;">L · Black</div></div>
+            <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Decoration</div><div style="font:500 11px 'DM Sans',sans-serif;color:#0f172a;">Embroidery</div></div>
+            <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Placement</div><div style="font:500 11px 'DM Sans',sans-serif;color:#0f172a;">Left Chest</div></div>
+            <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">W × H</div><div style="font:500 11px 'DM Sans',sans-serif;color:#0f172a;">10" × 8"</div></div>
+            <div><div style="font:600 8px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;margin-bottom:2px;">Thread</div><div style="font:500 11px 'DM Sans',sans-serif;color:#0f172a;">PMS 286C</div></div>
+          </div>
+
+          <!-- notes -->
+          <div style="margin:0 24px 16px;background:#fef3c7;border:1.5px solid #fde68a;border-radius:6px;padding:8px 12px;">
+            <div style="font:700 9px 'DM Sans',sans-serif;color:#92400e;text-transform:uppercase;margin-bottom:3px;">Notes</div>
+            <div style="font:400 10px 'DM Sans',sans-serif;color:#78350f;line-height:1.5;">Proof approved. Production begins 10 July.</div>
+          </div>
+
+          <!-- footer -->
+          <div style="padding:8px 24px;border-top:1.5px solid #f1f5f9;display:flex;justify-content:space-between;background:#fafafa;">
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">PromoWear.ie · Confidential</div>
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Page 1 of 3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next" style="color:#475569;">Next: <a class="dv-oid" href="#4a">4a</a> 2-up H · <a class="dv-oid" href="#4b">4b</a> 2-up V · <a class="dv-oid" href="#4c">4c</a> 3-up · <a class="dv-oid" href="#4d">4d</a> 4-up</p>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- TURN 4 — PDF multi-up layouts                            -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="dv-turn" id="t4">
+  <div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">PDF Export — 2-up, 3-up &amp; 4-up layouts</span></div>
+  <div class="dv-opts">
+
+    <!-- 4a: 2-up Horizontal -->
+    <div class="dv-opt" id="4a">
+      <div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>2-up · Horizontal cards</div>
+      <div class="dv-card" style="width:500px;background:#e8ecf0;padding:16px;">
+        <div style="background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.15);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;min-height:680px;position:relative;">
+          <div style="position:absolute;bottom:12px;right:18px;font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Page 1 of 2</div>
+          <!-- header -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 22px 12px;border-bottom:2px solid #0f172a;">
+            <img src="uploads/company_logo-1783508565185.png" style="height:26px;object-fit:contain;" alt="PromoWear.ie">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font:400 9px 'DM Sans',sans-serif;color:#94a3b8;text-align:right;line-height:1.7;"><div>QT-2024-089</div><div>08 July 2025</div></div>
+              <div style="width:54px;height:26px;border:1.5px solid #e2e8f0;border-radius:3px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font:400 8px 'DM Sans',sans-serif;color:#94a3b8;">Client Logo</div>
+            </div>
+          </div>
+          <!-- 2 horizontal cards -->
+          <div style="display:flex;flex-direction:column;gap:0;flex:1;padding:14px 22px;gap:12px;">
+            <!-- card 1 -->
+            <div style="flex:1;border:1.5px solid #f1f5f9;border-radius:8px;overflow:hidden;display:flex;">
+              <div style="flex:0 0 40%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;padding:14px;">
+                <svg viewBox="0 0 220 260" style="width:100px;" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="#94a3b8"/><path d="M220,88 L192,22 L146,18 L160,92 Z" fill="#94a3b8"/>
+                  <path d="M56,88 L56,254 L164,254 L164,88 Z" fill="#94a3b8"/>
+                  <path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#8898ab"/><path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#8898ab"/>
+                  <path d="M74,18 Q110,52 146,18" fill="#7a8898"/>
+                  <rect x="76" y="98" width="68" height="30" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="110" y="112" font-family="DM Sans" font-size="9" font-weight="700" fill="#3498B5" text-anchor="middle" letter-spacing="2">ACME</text>
+                  <text x="110" y="122" font-family="DM Sans" font-size="7" fill="#56b8d8" text-anchor="middle">CORP</text>
+                </svg>
+              </div>
+              <div style="flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:5px;justify-content:center;">
+                <div style="font:700 13px 'DM Sans',sans-serif;color:#0f172a;">Gildan 5000</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;">
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">SKU</div><div style="font:500 10px 'JetBrains Mono',monospace;color:#334155;">GLD-5000</div></div>
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">Price</div><div style="font:700 10px 'DM Sans',sans-serif;color:#0f172a;">€12.50</div></div>
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">Qty · Size</div><div style="font:500 10px 'DM Sans',sans-serif;color:#334155;">50 pcs · L</div></div>
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">Colour</div><div style="font:500 10px 'DM Sans',sans-serif;color:#334155;">Black</div></div>
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">Deco</div><div style="font:500 10px 'DM Sans',sans-serif;color:#334155;">Embroidery</div></div>
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">W × H</div><div style="font:500 10px 'DM Sans',sans-serif;color:#334155;">10" × 8"</div></div>
+                </div>
+              </div>
+            </div>
+            <!-- card 2 -->
+            <div style="flex:1;border:1.5px solid #f1f5f9;border-radius:8px;overflow:hidden;display:flex;">
+              <div style="flex:0 0 40%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;padding:14px;">
+                <svg viewBox="0 0 220 260" style="width:100px;" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="#7a8898"/><path d="M220,88 L192,22 L146,18 L160,92 Z" fill="#7a8898"/>
+                  <path d="M56,88 L56,254 L164,254 L164,88 Z" fill="#7a8898"/>
+                  <path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#6a7888"/><path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#6a7888"/>
+                  <path d="M74,18 Q110,52 146,18" fill="#5a6878"/>
+                  <rect x="76" y="98" width="68" height="30" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="110" y="112" font-family="DM Sans" font-size="9" font-weight="700" fill="#3498B5" text-anchor="middle" letter-spacing="2">ACME</text>
+                  <text x="110" y="122" font-family="DM Sans" font-size="7" fill="#56b8d8" text-anchor="middle">CORP</text>
+                </svg>
+              </div>
+              <div style="flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:5px;justify-content:center;">
+                <div style="font:700 13px 'DM Sans',sans-serif;color:#0f172a;">Gildan 18500 Hoodie</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;">
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">SKU</div><div style="font:500 10px 'JetBrains Mono',monospace;color:#334155;">GLD-18500</div></div>
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">Price</div><div style="font:700 10px 'DM Sans',sans-serif;color:#0f172a;">€18.00</div></div>
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">Qty · Size</div><div style="font:500 10px 'DM Sans',sans-serif;color:#334155;">30 pcs · XL</div></div>
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">Colour</div><div style="font:500 10px 'DM Sans',sans-serif;color:#334155;">Navy</div></div>
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">Deco</div><div style="font:500 10px 'DM Sans',sans-serif;color:#334155;">Print</div></div>
+                  <div><div style="font:600 7px 'DM Sans',sans-serif;color:#cbd5e1;text-transform:uppercase;">W × H</div><div style="font:500 10px 'DM Sans',sans-serif;color:#334155;">12" × 10"</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- footer -->
+          <div style="padding:8px 22px;border-top:1.5px solid #f1f5f9;display:flex;justify-content:space-between;background:#fafafa;">
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Proof approved. Production begins 10 July.</div>
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">PromoWear.ie</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4b: 2-up Vertical -->
+    <div class="dv-opt" id="4b">
+      <div class="dv-olabel"><a class="dv-oid" href="#4b">4b</a>2-up · Vertical cards side-by-side</div>
+      <div class="dv-card" style="width:460px;background:#e8ecf0;padding:16px;">
+        <div style="background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.15);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;min-height:680px;position:relative;">
+          <div style="position:absolute;bottom:12px;right:18px;font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Page 1 of 2</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 22px 12px;border-bottom:2px solid #0f172a;">
+            <img src="uploads/company_logo-1783508565185.png" style="height:26px;object-fit:contain;" alt="PromoWear.ie">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font:400 9px 'DM Sans',sans-serif;color:#94a3b8;text-align:right;line-height:1.7;"><div>QT-2024-089</div><div>08 July 2025</div></div>
+              <div style="width:52px;height:24px;border:1.5px solid #e2e8f0;border-radius:3px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font:400 8px 'DM Sans',sans-serif;color:#94a3b8;">Client Logo</div>
+            </div>
+          </div>
+          <!-- 2-col vertical cards -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;padding:14px 22px;">
+            <!-- card 1 -->
+            <div style="border:1.5px solid #f1f5f9;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#f1f5f9;height:200px;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 220 260" style="width:90px;" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="#94a3b8"/><path d="M220,88 L192,22 L146,18 L160,92 Z" fill="#94a3b8"/>
+                  <path d="M56,88 L56,254 L164,254 L164,88 Z" fill="#94a3b8"/>
+                  <path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#8898ab"/><path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#8898ab"/>
+                  <path d="M74,18 Q110,52 146,18" fill="#7a8898"/>
+                  <rect x="76" y="98" width="68" height="30" rx="2" fill="rgba(255,255,255,.9)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="110" y="112" font-family="DM Sans" font-size="9" font-weight="700" fill="#3498B5" text-anchor="middle" letter-spacing="2">ACME</text>
+                  <text x="110" y="122" font-family="DM Sans" font-size="7" fill="#56b8d8" text-anchor="middle">CORP</text>
+                </svg>
+              </div>
+              <div style="padding:10px 12px;flex:1;display:flex;flex-direction:column;gap:4px;">
+                <div style="font:700 12px 'DM Sans',sans-serif;color:#0f172a;">Gildan 5000</div>
+                <div style="font:400 10px 'DM Sans',sans-serif;color:#64748b;line-height:1.6;">50 pcs · Black · L<br>Embroidery · Left Chest<br>10" × 8" · PMS 286C</div>
+                <div style="font:700 11px 'DM Sans',sans-serif;color:#0f172a;margin-top:auto;padding-top:6px;border-top:1px solid #f1f5f9;">€12.50</div>
+              </div>
+            </div>
+            <!-- card 2 -->
+            <div style="border:1.5px solid #f1f5f9;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#e8ecf0;height:200px;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 220 260" style="width:90px;" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="#7a8898"/><path d="M220,88 L192,22 L146,18 L160,92 Z" fill="#7a8898"/>
+                  <path d="M56,88 L56,254 L164,254 L164,88 Z" fill="#7a8898"/>
+                  <path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#6a7888"/><path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#6a7888"/>
+                  <path d="M74,18 Q110,52 146,18" fill="#5a6878"/>
+                  <rect x="76" y="98" width="68" height="30" rx="2" fill="rgba(255,255,255,.9)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="110" y="112" font-family="DM Sans" font-size="9" font-weight="700" fill="#3498B5" text-anchor="middle" letter-spacing="2">ACME</text>
+                  <text x="110" y="122" font-family="DM Sans" font-size="7" fill="#56b8d8" text-anchor="middle">CORP</text>
+                </svg>
+              </div>
+              <div style="padding:10px 12px;flex:1;display:flex;flex-direction:column;gap:4px;">
+                <div style="font:700 12px 'DM Sans',sans-serif;color:#0f172a;">Gildan 18500</div>
+                <div style="font:400 10px 'DM Sans',sans-serif;color:#64748b;line-height:1.6;">30 pcs · Navy · XL<br>Print · Back<br>12" × 10" · CMYK</div>
+                <div style="font:700 11px 'DM Sans',sans-serif;color:#0f172a;margin-top:auto;padding-top:6px;border-top:1px solid #f1f5f9;">€18.00</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:8px 22px;border-top:1.5px solid #f1f5f9;display:flex;justify-content:space-between;background:#fafafa;">
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Proof approved. Production begins 10 July.</div>
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">PromoWear.ie</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4c: 3-up -->
+    <div class="dv-opt" id="4c">
+      <div class="dv-olabel"><a class="dv-oid" href="#4c">4c</a>3-up · Vertical cards (3-col)</div>
+      <div class="dv-card" style="width:560px;background:#e8ecf0;padding:16px;">
+        <div style="background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.15);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;min-height:580px;position:relative;">
+          <div style="position:absolute;bottom:12px;right:18px;font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Page 1 of 1</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 12px;border-bottom:2px solid #0f172a;">
+            <img src="uploads/company_logo-1783508565185.png" style="height:24px;object-fit:contain;" alt="PromoWear.ie">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font:400 9px 'DM Sans',sans-serif;color:#94a3b8;text-align:right;line-height:1.7;"><div>QT-2024-089 · 08 July 2025</div><div>Acme Corp Ltd</div></div>
+              <div style="width:48px;height:22px;border:1.5px solid #e2e8f0;border-radius:3px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font:400 7px 'DM Sans',sans-serif;color:#94a3b8;">Client Logo</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;flex:1;padding:12px 22px;">
+            <!-- 3 cards -->
+            <div style="border:1.5px solid #f1f5f9;border-radius:7px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#f1f5f9;height:140px;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 220 260" style="width:70px;" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="#94a3b8"/><path d="M220,88 L192,22 L146,18 L160,92 Z" fill="#94a3b8"/><path d="M56,88 L56,254 L164,254 L164,88 Z" fill="#94a3b8"/><path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#8898ab"/><path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#8898ab"/><path d="M74,18 Q110,52 146,18" fill="#7a8898"/>
+                  <rect x="80" y="100" width="60" height="28" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="110" y="114" font-family="DM Sans" font-size="8" font-weight="700" fill="#3498B5" text-anchor="middle" letter-spacing="1.5">ACME</text>
+                </svg>
+              </div>
+              <div style="padding:8px 10px;flex:1;display:flex;flex-direction:column;gap:3px;">
+                <div style="font:700 11px 'DM Sans',sans-serif;color:#0f172a;">Gildan 5000</div>
+                <div style="font:400 9px 'DM Sans',sans-serif;color:#64748b;line-height:1.6;">50 · Black · L<br>Embroidery · Chest<br>10"×8"</div>
+                <div style="font:700 10px 'DM Sans',sans-serif;color:#0f172a;margin-top:auto;padding-top:5px;border-top:1px solid #f1f5f9;">€12.50</div>
+              </div>
+            </div>
+            <div style="border:1.5px solid #f1f5f9;border-radius:7px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#e8ecf0;height:140px;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 220 260" style="width:70px;" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="#7a8898"/><path d="M220,88 L192,22 L146,18 L160,92 Z" fill="#7a8898"/><path d="M56,88 L56,254 L164,254 L164,88 Z" fill="#7a8898"/><path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#6a7888"/><path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#6a7888"/><path d="M74,18 Q110,52 146,18" fill="#5a6878"/>
+                  <rect x="80" y="100" width="60" height="28" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="110" y="114" font-family="DM Sans" font-size="8" font-weight="700" fill="#3498B5" text-anchor="middle" letter-spacing="1.5">ACME</text>
+                </svg>
+              </div>
+              <div style="padding:8px 10px;flex:1;display:flex;flex-direction:column;gap:3px;">
+                <div style="font:700 11px 'DM Sans',sans-serif;color:#0f172a;">Gildan 18500</div>
+                <div style="font:400 9px 'DM Sans',sans-serif;color:#64748b;line-height:1.6;">30 · Navy · XL<br>Print · Back<br>12"×10"</div>
+                <div style="font:700 10px 'DM Sans',sans-serif;color:#0f172a;margin-top:auto;padding-top:5px;border-top:1px solid #f1f5f9;">€18.00</div>
+              </div>
+            </div>
+            <div style="border:1.5px solid #f1f5f9;border-radius:7px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#f8f0e8;height:140px;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 200 120" style="width:70px;" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="10" y="10" width="180" height="100" rx="10" fill="#c4a882"/>
+                  <rect x="30" y="15" width="140" height="20" rx="5" fill="#b89060"/>
+                  <rect x="80" y="100" width="40" height="12" rx="3" fill="#b89060"/>
+                  <rect x="70" y="42" width="60" height="28" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="100" y="56" font-family="DM Sans" font-size="8" font-weight="700" fill="#3498B5" text-anchor="middle" letter-spacing="1.5">ACME</text>
+                </svg>
+              </div>
+              <div style="padding:8px 10px;flex:1;display:flex;flex-direction:column;gap:3px;">
+                <div style="font:700 11px 'DM Sans',sans-serif;color:#0f172a;">Flexfit 110 Cap</div>
+                <div style="font:400 9px 'DM Sans',sans-serif;color:#64748b;line-height:1.6;">20 · Tan · O/S<br>Embroidery · Front<br>4"×3"</div>
+                <div style="font:700 10px 'DM Sans',sans-serif;color:#0f172a;margin-top:auto;padding-top:5px;border-top:1px solid #f1f5f9;">€9.00</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:8px 22px;border-top:1.5px solid #f1f5f9;display:flex;justify-content:space-between;background:#fafafa;">
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Proof approved. Production begins 10 July.</div>
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">PromoWear.ie</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4d: 4-up -->
+    <div class="dv-opt" id="4d">
+      <div class="dv-olabel"><a class="dv-oid" href="#4d">4d</a>4-up · 2×2 grid</div>
+      <div class="dv-card" style="width:480px;background:#e8ecf0;padding:16px;">
+        <div style="background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.15);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;min-height:580px;position:relative;">
+          <div style="position:absolute;bottom:12px;right:18px;font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Page 1 of 1</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 12px;border-bottom:2px solid #0f172a;">
+            <img src="uploads/company_logo-1783508565185.png" style="height:24px;object-fit:contain;" alt="PromoWear.ie">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="font:400 9px 'DM Sans',sans-serif;color:#94a3b8;text-align:right;line-height:1.7;"><div>QT-2024-089 · 08 July 2025</div></div>
+              <div style="width:48px;height:22px;border:1.5px solid #e2e8f0;border-radius:3px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font:400 7px 'DM Sans',sans-serif;color:#94a3b8;">Client Logo</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;flex:1;padding:12px 22px;">
+            <!-- 4 cards -->
+            <div style="border:1.5px solid #f1f5f9;border-radius:7px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#f1f5f9;height:110px;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 220 260" style="width:60px;" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="#94a3b8"/><path d="M220,88 L192,22 L146,18 L160,92 Z" fill="#94a3b8"/><path d="M56,88 L56,254 L164,254 L164,88 Z" fill="#94a3b8"/><path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#8898ab"/><path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#8898ab"/><path d="M74,18 Q110,52 146,18" fill="#7a8898"/>
+                  <rect x="80" y="100" width="60" height="26" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="110" y="113" font-family="DM Sans" font-size="7" font-weight="700" fill="#3498B5" text-anchor="middle">ACME</text>
+                </svg>
+              </div>
+              <div style="padding:7px 9px;flex:1;">
+                <div style="font:700 10px 'DM Sans',sans-serif;color:#0f172a;">Gildan 5000</div>
+                <div style="font:400 9px 'DM Sans',sans-serif;color:#64748b;line-height:1.5;margin-top:2px;">50 pcs · Black · €12.50<br>Embroidery · Chest</div>
+              </div>
+            </div>
+            <div style="border:1.5px solid #f1f5f9;border-radius:7px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#e8ecf0;height:110px;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 220 260" style="width:60px;" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0,88 L28,22 L74,18 L60,92 Z" fill="#7a8898"/><path d="M220,88 L192,22 L146,18 L160,92 Z" fill="#7a8898"/><path d="M56,88 L56,254 L164,254 L164,88 Z" fill="#7a8898"/><path d="M28,22 L74,18 L56,88 L0,88 Z" fill="#6a7888"/><path d="M192,22 L146,18 L164,88 L220,88 Z" fill="#6a7888"/><path d="M74,18 Q110,52 146,18" fill="#5a6878"/>
+                  <rect x="80" y="100" width="60" height="26" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="110" y="113" font-family="DM Sans" font-size="7" font-weight="700" fill="#3498B5" text-anchor="middle">ACME</text>
+                </svg>
+              </div>
+              <div style="padding:7px 9px;flex:1;">
+                <div style="font:700 10px 'DM Sans',sans-serif;color:#0f172a;">Gildan 18500</div>
+                <div style="font:400 9px 'DM Sans',sans-serif;color:#64748b;line-height:1.5;margin-top:2px;">30 pcs · Navy · €18.00<br>Print · Back</div>
+              </div>
+            </div>
+            <div style="border:1.5px solid #f1f5f9;border-radius:7px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#f8f0e8;height:110px;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 200 120" style="width:60px;" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="10" y="10" width="180" height="100" rx="10" fill="#c4a882"/>
+                  <rect x="30" y="15" width="140" height="20" rx="5" fill="#b89060"/>
+                  <rect x="80" y="100" width="40" height="12" rx="3" fill="#b89060"/>
+                  <rect x="72" y="44" width="56" height="24" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="100" y="57" font-family="DM Sans" font-size="7" font-weight="700" fill="#3498B5" text-anchor="middle">ACME</text>
+                </svg>
+              </div>
+              <div style="padding:7px 9px;flex:1;">
+                <div style="font:700 10px 'DM Sans',sans-serif;color:#0f172a;">Flexfit 110 Cap</div>
+                <div style="font:400 9px 'DM Sans',sans-serif;color:#64748b;line-height:1.5;margin-top:2px;">20 pcs · Tan · €9.00<br>Embroidery · Front</div>
+              </div>
+            </div>
+            <div style="border:1.5px solid #f1f5f9;border-radius:7px;overflow:hidden;display:flex;flex-direction:column;">
+              <div style="background:#eef1f8;height:110px;display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 200 180" style="width:70px;" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="10" y="30" width="180" height="140" rx="6" fill="#b0bec5"/>
+                  <path d="M10,30 L100,10 L190,30" fill="#90a4ae" stroke="none"/>
+                  <rect x="70" y="70" width="60" height="26" rx="2" fill="rgba(255,255,255,.88)" stroke="#3498B5" stroke-width="1.5"/>
+                  <text x="100" y="83" font-family="DM Sans" font-size="7" font-weight="700" fill="#3498B5" text-anchor="middle">ACME</text>
+                </svg>
+              </div>
+              <div style="padding:7px 9px;flex:1;">
+                <div style="font:700 10px 'DM Sans',sans-serif;color:#0f172a;">Tote Pro 500</div>
+                <div style="font:400 9px 'DM Sans',sans-serif;color:#64748b;line-height:1.5;margin-top:2px;">100 pcs · Natural · €6.50<br>Print · Front</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:8px 22px;border-top:1.5px solid #f1f5f9;display:flex;justify-content:space-between;background:#fafafa;">
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">Proof approved. Production begins 10 July.</div>
+            <div style="font:400 9px 'DM Sans',sans-serif;color:#cbd5e1;">PromoWear.ie</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next" style="color:#475569;">Happy with these? Say <b style="color:#3498B5;">"build it"</b> — I'll code the full working app. Or: "add a cover page" · "refine the main app screen"</p>
+</section>
+
+</x-dc>
+</body>
+</html>
